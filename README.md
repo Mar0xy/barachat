@@ -75,10 +75,13 @@ docker compose up -d
 ```
 
 This will:
-- Build and start the API server, WebSocket server, and web frontend
+- Pull pre-built images from GitHub Container Registry (GHCR)
+- Start the API server, WebSocket server, and web frontend
 - Start MongoDB and Redis (no external ports exposed)
 - Set up an internal network for all services
 - Expose only port 8080 through an nginx reverse proxy
+
+> **Note:** By default, `docker-compose.yml` uses pre-built images from GHCR. If you want to build images locally instead, see [DOCKER.md](DOCKER.md) for instructions.
 
 The application will be available at: **http://localhost:8080**
 

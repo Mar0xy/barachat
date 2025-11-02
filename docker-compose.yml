@@ -18,9 +18,12 @@ services:
     # No ports exposed externally - only accessible within the network
 
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
+    # Use pre-built image from GitHub Container Registry
+    image: ghcr.io/mar0xy/barachat:api
+    # Uncomment below to build locally instead:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.api
     environment:
       MONGODB_URI: mongodb://mongodb:27017/barachat
       REDIS_URL: redis://redis:6379
@@ -38,9 +41,12 @@ services:
     # No ports exposed externally
 
   websocket:
-    build:
-      context: .
-      dockerfile: Dockerfile.websocket
+    # Use pre-built image from GitHub Container Registry
+    image: ghcr.io/mar0xy/barachat:websocket
+    # Uncomment below to build locally instead:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.websocket
     environment:
       MONGODB_URI: mongodb://mongodb:27017/barachat
       REDIS_URL: redis://redis:6379
@@ -56,9 +62,12 @@ services:
     # No ports exposed externally
 
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
+    # Use pre-built image from GitHub Container Registry
+    image: ghcr.io/mar0xy/barachat:web
+    # Uncomment below to build locally instead:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.web
     networks:
       - barachat-network
     depends_on:
