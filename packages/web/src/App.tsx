@@ -128,6 +128,7 @@ export const Chat: Component = () => {
   const [showCreateServer, setShowCreateServer] = createSignal(false);
   const [showUserSettings, setShowUserSettings] = createSignal(false);
   const [showServerSettings, setShowServerSettings] = createSignal(false);
+  const [showCreateChannel, setShowCreateChannel] = createSignal(false);
   const navigate = useNavigate();
 
   // Fetch servers
@@ -303,7 +304,18 @@ export const Chat: Component = () => {
           </Show>
         </div>
         <div class="channel-list">
-          <div class="channel-category">TEXT CHANNELS</div>
+          <div class="channel-category">
+            <span>TEXT CHANNELS</span>
+            <Show when={currentServer()}>
+              <button 
+                class="add-channel-button" 
+                onClick={() => setShowCreateChannel(true)}
+                title="Create Channel"
+              >
+                +
+              </button>
+            </Show>
+          </div>
           <For each={serverChannels()}>
             {(channel) => (
               <div
@@ -390,6 +402,20 @@ export const Chat: Component = () => {
         <ServerSettingsModal
           server={servers().find(s => s._id === currentServer())}
           onClose={() => setShowServerSettings(false)}
+          onUpdate={(updatedServer) => {
+            setServers(servers().map(s => s._id === updatedServer._id ? updatedServer : s));
+          }}
+        />
+      </Show>
+
+      {/* Create Channel Modal */}
+      <Show when={showCreateChannel()}>
+        <CreateChannelModal
+          serverId={currentServer()}
+          onClose={() => setShowCreateChannel(false)}
+          onCreate={(channel) => {
+            setChannels([...channels(), channel]);
+          }}
         />
       </Show>
     </div>
@@ -458,7 +484,43 @@ const UserSettingsModal: Component<{
   onUpdate: (user: User) => void;
 }> = (props) => {
   const [displayName, setDisplayName] = createSignal(props.user?.displayName || '');
+  const [avatar, setAvatar] = createSignal(props.user?.avatar || '');
   const [saving, setSaving] = createSignal(false);
+  const [uploading, setUploading] = createSignal(false);
+
+  const handleFileUpload = async (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/upload/avatar`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAvatar(API_URL + data.url);
+      } else {
+        alert('Failed to upload avatar');
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Error uploading avatar');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = async (e: Event) => {
     e.preventDefault();
@@ -472,7 +534,10 @@ const UserSettingsModal: Component<{
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ displayName: displayName() })
+        body: JSON.stringify({ 
+          displayName: displayName(),
+          avatar: avatar()
+        })
       });
 
       if (response.ok) {
@@ -515,6 +580,31 @@ const UserSettingsModal: Component<{
                   placeholder="Enter a display name"
                 />
               </label>
+              <label>
+                Avatar
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={uploading()}
+                />
+                {uploading() && <p class="upload-status">Uploading...</p>}
+              </label>
+              <label>
+                Avatar URL (or upload above)
+                <input
+                  type="text"
+                  value={avatar()}
+                  onInput={(e) => setAvatar(e.currentTarget.value)}
+                  placeholder="Enter avatar image URL (e.g., https://...)"
+                />
+              </label>
+              <Show when={avatar()}>
+                <div class="avatar-preview">
+                  <p>Avatar Preview:</p>
+                  <img src={avatar()} alt="Avatar preview" class="preview-image" />
+                </div>
+              </Show>
             </div>
           </div>
           <div class="modal-footer">
@@ -533,7 +623,81 @@ const UserSettingsModal: Component<{
 const ServerSettingsModal: Component<{
   server: Server | undefined;
   onClose: () => void;
+  onUpdate: (server: Server) => void;
 }> = (props) => {
+  const [name, setName] = createSignal(props.server?.name || '');
+  const [description, setDescription] = createSignal(props.server?.description || '');
+  const [icon, setIcon] = createSignal(props.server?.icon || '');
+  const [saving, setSaving] = createSignal(false);
+  const [uploading, setUploading] = createSignal(false);
+
+  const handleFileUpload = async (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append('icon', file);
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/upload/server-icon`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIcon(API_URL + data.url);
+      } else {
+        alert('Failed to upload server icon');
+      }
+    } catch (error) {
+      console.error('Error uploading server icon:', error);
+      alert('Error uploading server icon');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSave = async (e: Event) => {
+    e.preventDefault();
+    if (!props.server) return;
+
+    setSaving(true);
+    const token = localStorage.getItem('token');
+    
+    try {
+      const response = await fetch(`${API_URL}/servers/${props.server._id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: name(),
+          description: description(),
+          icon: icon()
+        })
+      });
+
+      if (response.ok) {
+        const updatedServer = await response.json();
+        props.onUpdate(updatedServer);
+        props.onClose();
+      }
+    } catch (error) {
+      console.error('Error updating server:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div class="modal-overlay" onClick={props.onClose}>
       <div class="modal" onClick={(e) => e.stopPropagation()}>
@@ -541,23 +705,142 @@ const ServerSettingsModal: Component<{
           <h2>Server Settings</h2>
           <button class="modal-close" onClick={props.onClose}>×</button>
         </div>
-        <div class="modal-body">
-          <div class="settings-section">
-            <h3>Overview</h3>
-            <label>
-              Server Name
-              <input type="text" value={props.server?.name || ''} disabled />
-            </label>
-            <label>
-              Server ID
-              <input type="text" value={props.server?._id || ''} disabled />
-            </label>
-            <p class="settings-note">More server settings coming soon...</p>
+        <form onSubmit={handleSave}>
+          <div class="modal-body">
+            <div class="settings-section">
+              <h3>Overview</h3>
+              <label>
+                Server Name
+                <input 
+                  type="text" 
+                  value={name()} 
+                  onInput={(e) => setName(e.currentTarget.value)}
+                  placeholder="Server Name"
+                />
+              </label>
+              <label>
+                Description
+                <textarea
+                  value={description()}
+                  onInput={(e) => setDescription(e.currentTarget.value)}
+                  placeholder="Server description"
+                  rows={3}
+                />
+              </label>
+              <label>
+                Server Icon
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={uploading()}
+                />
+                {uploading() && <p class="upload-status">Uploading...</p>}
+              </label>
+              <label>
+                Server Icon URL (or upload above)
+                <input
+                  type="text"
+                  value={icon()}
+                  onInput={(e) => setIcon(e.currentTarget.value)}
+                  placeholder="Enter icon image URL (e.g., https://...)"
+                />
+              </label>
+              <Show when={icon()}>
+                <div class="avatar-preview">
+                  <p>Icon Preview:</p>
+                  <img src={icon()} alt="Server icon preview" class="preview-image" />
+                </div>
+              </Show>
+              <label>
+                Server ID
+                <input type="text" value={props.server?._id || ''} disabled />
+              </label>
+            </div>
           </div>
+          <div class="modal-footer">
+            <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
+            <button type="submit" class="button-primary" disabled={saving()}>
+              {saving() ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Create Channel Modal Component
+const CreateChannelModal: Component<{
+  serverId: string;
+  onClose: () => void;
+  onCreate: (channel: Channel) => void;
+}> = (props) => {
+  const [name, setName] = createSignal('');
+  const [description, setDescription] = createSignal('');
+
+  const handleSubmit = async (e: Event) => {
+    e.preventDefault();
+    if (!name().trim() || !props.serverId) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/${props.serverId}/channels`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: name(),
+          description: description()
+        })
+      });
+
+      if (response.ok) {
+        const channel = await response.json();
+        props.onCreate(channel);
+        props.onClose();
+      }
+    } catch (error) {
+      console.error('Error creating channel:', error);
+    }
+  };
+
+  return (
+    <div class="modal-overlay" onClick={props.onClose}>
+      <div class="modal" onClick={(e) => e.stopPropagation()}>
+        <div class="modal-header">
+          <h2>Create Text Channel</h2>
+          <button class="modal-close" onClick={props.onClose}>×</button>
         </div>
-        <div class="modal-footer">
-          <button class="button-primary" onClick={props.onClose}>Close</button>
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div class="modal-body">
+            <label>
+              Channel Name
+              <input
+                type="text"
+                value={name()}
+                onInput={(e) => setName(e.currentTarget.value)}
+                placeholder="general"
+                required
+              />
+            </label>
+            <label>
+              Description (optional)
+              <textarea
+                value={description()}
+                onInput={(e) => setDescription(e.currentTarget.value)}
+                placeholder="Channel topic..."
+                rows={3}
+              />
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
+            <button type="submit" class="button-primary">Create Channel</button>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -52,6 +52,12 @@ COPY --from=builder /app/packages/config/dist ./packages/config/dist
 COPY --from=builder /app/packages/database/dist ./packages/database/dist
 COPY --from=builder /app/packages/api/dist ./packages/api/dist
 
+# Create uploads directory
+RUN mkdir -p /app/uploads
+
+# Set uploads directory as a volume
+VOLUME /app/uploads
+
 EXPOSE 3000
 
 CMD ["node", "packages/api/dist/index.js"]
