@@ -4,6 +4,7 @@ export interface User {
   discriminator: string;
   displayName?: string;
   avatar?: string;
+  bio?: string;
   badges?: number;
   status?: UserStatus;
   relationship?: RelationshipStatus;

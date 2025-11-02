@@ -202,3 +202,48 @@ serversRouter.get('/:serverId/channels', authenticate, async (req: AuthRequest, 
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Get server members
+serversRouter.get('/:serverId/members', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { serverId } = req.params;
+
+    // Check if user is server member
+    const userMember = await db.members.findOne({
+      '_id.server': serverId,
+      '_id.user': req.userId
+    });
+
+    if (!userMember) {
+      return res.status(403).json({ error: 'Forbidden: Not a server member' });
+    }
+
+    // Get all members of the server
+    const members = await db.members.find({
+      '_id.server': serverId
+    }).toArray();
+
+    // Fetch user details for each member
+    const userIds = members.map(m => m._id.user);
+    const users = await db.users.find({ _id: { $in: userIds } }).toArray();
+
+    // Get presence status for each user
+    const membersWithPresence = await Promise.all(
+      members.map(async (member) => {
+        const userInfo = users.find(u => u._id === member.user);
+        const online = await db.getPresence(member._id.user);
+        
+        return {
+          ...member,
+          user: userInfo,
+          online
+        };
+      })
+    );
+
+    res.json(membersWithPresence);
+  } catch (error) {
+    console.error('Error fetching members:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});

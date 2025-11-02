@@ -39,12 +39,13 @@ usersRouter.get('/:userId', authenticate, async (req: AuthRequest, res) => {
 // Update user
 usersRouter.patch('/@me', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { displayName, status, avatar } = req.body;
+    const { displayName, status, avatar, bio } = req.body;
     
     const update: any = {};
     if (displayName !== undefined) update.displayName = displayName;
     if (status !== undefined) update.status = status;
     if (avatar !== undefined) update.avatar = avatar;
+    if (bio !== undefined) update.bio = bio;
 
     await db.users.updateOne(
       { _id: req.userId },
@@ -55,6 +56,99 @@ usersRouter.patch('/@me', authenticate, async (req: AuthRequest, res) => {
     res.json(user);
   } catch (error) {
     console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get user relationships/friends
+usersRouter.get('/@me/relationships', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const user = await db.users.findOne({ _id: req.userId });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get all relationship records where this user is involved
+    const relationships = await db.getRedis().hGetAll(`relationships:${req.userId}`) || {};
+    
+    // Fetch user details for each relationship
+    const friendIds = Object.keys(relationships);
+    const friends = await db.users.find({ _id: { $in: friendIds } }).toArray();
+    
+    const result = friends.map(friend => ({
+      ...friend,
+      relationshipStatus: relationships[friend._id]
+    }));
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching relationships:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Send friend request
+usersRouter.post('/@me/relationships/:userId', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const targetUserId = req.params.userId;
+    
+    if (targetUserId === req.userId) {
+      return res.status(400).json({ error: 'Cannot add yourself as a friend' });
+    }
+
+    const targetUser = await db.users.findOne({ _id: targetUserId });
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Set outgoing request for requester
+    await db.getRedis().hSet(`relationships:${req.userId}`, targetUserId, 'Outgoing');
+    // Set incoming request for target
+    await db.getRedis().hSet(`relationships:${targetUserId}`, req.userId!, 'Incoming');
+
+    res.json({ status: 'Friend request sent' });
+  } catch (error) {
+    console.error('Error sending friend request:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Accept/reject friend request
+usersRouter.put('/@me/relationships/:userId', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const targetUserId = req.params.userId;
+    const { action } = req.body; // 'accept' or 'reject'
+
+    if (action === 'accept') {
+      // Set both as friends
+      await db.getRedis().hSet(`relationships:${req.userId}`, targetUserId, 'Friend');
+      await db.getRedis().hSet(`relationships:${targetUserId}`, req.userId!, 'Friend');
+      res.json({ status: 'Friend request accepted' });
+    } else if (action === 'reject') {
+      // Remove relationship
+      await db.getRedis().hDel(`relationships:${req.userId}`, targetUserId);
+      await db.getRedis().hDel(`relationships:${targetUserId}`, req.userId!);
+      res.json({ status: 'Friend request rejected' });
+    } else {
+      res.status(400).json({ error: 'Invalid action' });
+    }
+  } catch (error) {
+    console.error('Error handling friend request:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Remove friend
+usersRouter.delete('/@me/relationships/:userId', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const targetUserId = req.params.userId;
+    
+    await db.getRedis().hDel(`relationships:${req.userId}`, targetUserId);
+    await db.getRedis().hDel(`relationships:${targetUserId}`, req.userId!);
+
+    res.json({ status: 'Friend removed' });
+  } catch (error) {
+    console.error('Error removing friend:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
