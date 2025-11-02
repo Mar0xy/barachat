@@ -25,6 +25,12 @@ body {
   height: 100vh;
 }
 
+.chat-container {
+  display: flex;
+  height: 100vh;
+  flex: 1;
+}
+
 /* Server List */
 .server-list {
   width: 72px;
