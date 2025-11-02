@@ -3,6 +3,7 @@ import { Channel } from '../types';
 
 interface ChannelListProps {
   channels: Channel[];
+  dmChannels?: any[];
   currentChannel: string;
   currentServer: string;
   serverName?: string;
@@ -81,6 +82,21 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
             </button>
           )}
         </For>
+        </Show>
+        
+        {/* DM Channels when on home */}
+        <Show when={!props.currentServer && props.dmChannels}>
+          <For each={props.dmChannels}>
+            {(dmChannel) => (
+              <button
+                class="channel-item"
+                classList={{ active: props.currentChannel === dmChannel._id }}
+                onClick={() => props.onChannelSelect(dmChannel._id)}
+              >
+                @ {dmChannel.recipient?.displayName || dmChannel.recipient?.username || 'Unknown User'}
+              </button>
+            )}
+          </For>
         </Show>
       </div>
     </div>

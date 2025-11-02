@@ -38,6 +38,7 @@ export const Chat: Component = () => {
   const [members, setMembers] = createSignal<Member[]>([]);
   const [showUserProfile, setShowUserProfile] = createSignal<User | null>(null);
   const [serverChannelMemory, setServerChannelMemory] = createSignal<Record<string, string>>({});
+  const [dmChannels, setDmChannels] = createSignal<any[]>([]);
   
   let fileInputRef: HTMLInputElement | undefined;
   const navigate = useNavigate();
@@ -60,6 +61,8 @@ export const Chat: Component = () => {
         // Switch to home (no server) and select the DM channel
         setCurrentServer('');
         setCurrentChannel(dmChannel._id);
+        // Reload DM channels to include the new one
+        await loadDMChannels();
         // Load messages for the DM
         loadMessages(dmChannel._id);
         // Close any open modals
@@ -141,6 +144,22 @@ export const Chat: Component = () => {
       }
     } catch (error) {
       console.error('Error loading members:', error);
+    }
+  };
+
+  // Load DM channels
+  const loadDMChannels = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/channels/dms/list`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const dmList = await response.json();
+        setDmChannels(dmList);
+      }
+    } catch (error) {
+      console.error('Error loading DM channels:', error);
     }
   };
 
@@ -412,8 +431,8 @@ export const Chat: Component = () => {
         setCurrentChannel(lastChannel);
       }
     } else {
-      // When switching to home, clear current channel and members
-      setCurrentChannel('');
+      // When switching to home, load DM channels and clear members
+      loadDMChannels();
       setMembers([]);
     }
   });
@@ -438,6 +457,7 @@ export const Chat: Component = () => {
     loadUser();
     loadServers();
     loadFriends();
+    loadDMChannels();
 
     // Connect WebSocket
     const websocket = new WebSocket(WS_URL);
@@ -553,7 +573,8 @@ export const Chat: Component = () => {
       
       <div class="sidebar">
         <ChannelList
-          channels={channels()}
+          channels={currentServer() ? channels() : []}
+          dmChannels={dmChannels()}
           currentChannel={currentChannel()}
           currentServer={currentServer()}
           serverName={servers().find(s => s._id === currentServer())?.name}

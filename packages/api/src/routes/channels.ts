@@ -89,3 +89,30 @@ channelsRouter.post('/create-dm', authenticate, async (req: AuthRequest, res) =>
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Get DM channels for current user
+channelsRouter.get('/dms/list', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const dmChannels = await db.channels.find({
+      channelType: ChannelType.DirectMessage,
+      recipients: req.userId
+    }).toArray();
+
+    // Populate recipient user data
+    const channelsWithUsers = await Promise.all(
+      dmChannels.map(async (channel: any) => {
+        const otherUserId = channel.recipients.find((id: string) => id !== req.userId);
+        const otherUser = await db.users.findOne({ _id: otherUserId });
+        return {
+          ...channel,
+          recipient: otherUser
+        };
+      })
+    );
+
+    res.json(channelsWithUsers);
+  } catch (error) {
+    console.error('Error fetching DM channels:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
