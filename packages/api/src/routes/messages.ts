@@ -126,6 +126,7 @@ messagesRouter.delete('/:channelId/messages/:messageId', authenticate, async (re
     // Broadcast message deletion via Redis
     await db.publishEvent({
       type: EventType.MessageDelete,
+      channelId: channelId,
       id: messageId,
       channel: channelId
     });

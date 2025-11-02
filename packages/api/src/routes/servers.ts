@@ -2,6 +2,7 @@ import { Router, type Router as ExpressRouter } from 'express';
 import { ulid } from 'ulid';
 import { db } from '@barachat/database';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import { EventType } from '@barachat/models';
 
 export const serversRouter: ExpressRouter = Router();
 
@@ -122,6 +123,14 @@ serversRouter.patch('/:serverId', authenticate, async (req: AuthRequest, res) =>
     );
 
     const updatedServer = await db.servers.findOne({ _id: serverId });
+    
+    // Broadcast server update via Redis
+    await db.publishEvent({
+      type: EventType.ServerUpdate,
+      id: serverId,
+      data: update
+    });
+    
     res.json(updatedServer);
   } catch (error) {
     console.error('Error updating server:', error);
@@ -173,6 +182,13 @@ serversRouter.post('/:serverId/channels', authenticate, async (req: AuthRequest,
       { _id: serverId },
       { $push: { channels: channelId } as any }
     );
+
+    // Broadcast channel creation to server members via Redis
+    await db.publishEvent({
+      type: EventType.ChannelCreate,
+      channel: channel,
+      serverId: serverId
+    });
 
     res.json(channel);
   } catch (error) {
