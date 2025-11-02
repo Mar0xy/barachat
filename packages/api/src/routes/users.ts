@@ -1,7 +1,7 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import { ulid } from 'ulid';
 import { db } from '@barachat/database';
-import { EventType } from '@barachat/models';
+import { EventType, ChannelType } from '@barachat/models';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
 export const usersRouter: ExpressRouter = Router();
@@ -240,6 +240,20 @@ usersRouter.delete('/@me/relationships/:userId', authenticate, async (req: AuthR
     
     await db.getRedis().hDel(`relationships:${req.userId}`, targetUserId);
     await db.getRedis().hDel(`relationships:${targetUserId}`, req.userId!);
+
+    // Delete DM channel between these users
+    const dmChannel = await db.channels.findOne({
+      channelType: ChannelType.DirectMessage,
+      recipients: { $all: [req.userId!, targetUserId] }
+    });
+    
+    if (dmChannel) {
+      // Delete all messages in the DM channel
+      await db.messages.deleteMany({ channel: dmChannel._id });
+      
+      // Delete the DM channel
+      await db.channels.deleteOne({ _id: dmChannel._id });
+    }
 
     // Broadcast to both users
     await db.publishEvent({

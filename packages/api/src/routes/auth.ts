@@ -86,6 +86,27 @@ authRouter.post('/login', async (req, res) => {
     // Generate token
     const token = jwt.sign({ userId: user._id }, config.jwtSecret, { expiresIn: '7d' });
 
+    // Set user presence to online
+    await db.getRedis().set(`presence:${user._id}`, 'Online');
+    
+    // Update user status in database
+    await db.users.updateOne(
+      { _id: user._id },
+      { $set: { 'status.presence': 'Online' } }
+    );
+    
+    // Broadcast user update
+    await db.publishEvent({
+      type: EventType.UserUpdate,
+      id: user._id,
+      data: {
+        status: {
+          ...user.status,
+          presence: 'Online'
+        }
+      }
+    });
+
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
