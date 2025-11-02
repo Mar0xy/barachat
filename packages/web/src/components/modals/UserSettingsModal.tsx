@@ -7,6 +7,7 @@ interface UserSettingsModalProps {
   user: User | null;
   onClose: () => void;
   onUpdate: (user: User) => void;
+  onLogout?: () => void;
 }
 
 export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
@@ -109,10 +110,9 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
           <div class="settings-sidebar-header">User Settings</div>
           <div class="settings-nav">
             <div class="settings-nav-item active">My Account</div>
-            <div class="settings-nav-item">Profiles</div>
           </div>
-          <div class="settings-logout" onClick={props.onClose}>
-            <span>ESC</span>
+          <div class="settings-logout" onClick={() => props.onLogout?.()}>
+            Log Out
           </div>
         </div>
         

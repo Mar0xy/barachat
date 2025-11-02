@@ -822,6 +822,7 @@ export const Chat: Component = () => {
           user={user()}
           onClose={() => setShowUserSettings(false)}
           onUpdate={updateUserProfile}
+          onLogout={logout}
         />
       </Show>
       

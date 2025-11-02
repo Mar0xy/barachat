@@ -1911,26 +1911,19 @@ body {
   padding: 8px 12px;
   margin-top: 16px;
   border-radius: 4px;
-  color: #b9bbbe;
+  color: #ed4245;
   cursor: pointer;
   font-size: 14px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   transition: all 0.15s;
+  font-weight: 500;
 }
 
 .settings-logout:hover {
   background: #2a2a2a;
-  color: #fff;
-}
-
-.settings-logout span {
-  margin-left: auto;
-  font-size: 12px;
-  padding: 2px 6px;
-  background: #2a2a2a;
-  border-radius: 3px;
+  color: #ff5555;
 }
 
 .settings-content {
@@ -1938,6 +1931,8 @@ body {
   background: #1e1e1e;
   overflow-y: auto;
   position: relative;
+  display: flex;
+  justify-content: center;
 }
 
 .settings-close {
@@ -1969,6 +1964,7 @@ body {
 
 .settings-content-inner {
   max-width: 740px;
+  width: 100%;
   padding: 60px 40px 80px 40px;
 }
 
