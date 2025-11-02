@@ -2,7 +2,7 @@
 
 <div align="center">
 
-A modern chat platform built with TypeScript, inspired by [Revolt](https://revolt.chat) and [Stoat](https://github.com/stoatchat/stoatchat).
+A modern chat platform built with TypeScript
 
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 
