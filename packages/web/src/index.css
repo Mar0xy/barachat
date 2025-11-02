@@ -578,6 +578,43 @@ body {
   margin-top: 16px;
 }
 
+/* Image Cropper */
+.cropper-modal {
+  max-width: 600px;
+  width: 90vw;
+}
+
+.cropper-body {
+  padding: 24px;
+  background: #1a1a1a;
+}
+
+.cropper-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.cropper-canvas {
+  max-width: 100%;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  cursor: move;
+  background: #1a1a1a;
+}
+
+.cropper-instructions {
+  color: #8e9297;
+  font-size: 13px;
+  text-align: center;
+}
+
+.cropper-instructions p {
+  margin: 4px 0;
+}
+
+
 .avatar-preview {
   margin-top: 12px;
   padding: 12px;

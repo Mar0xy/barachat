@@ -1,5 +1,6 @@
 import { Component, createSignal, Show, onMount, For, createEffect, batch } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
+import { ImageCropper } from './ImageCropper';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
@@ -40,6 +41,7 @@ interface Message {
   };
   content: string;
   channel: string;
+  attachments?: string[];
 }
 
 export const Login: Component = () => {
@@ -624,16 +626,31 @@ const UserSettingsModal: Component<{
   const [avatar, setAvatar] = createSignal(props.user?.avatar || '');
   const [saving, setSaving] = createSignal(false);
   const [uploading, setUploading] = createSignal(false);
+  const [cropImageUrl, setCropImageUrl] = createSignal<string | null>(null);
 
-  const handleFileUpload = async (e: Event) => {
+  const handleFileSelect = (e: Event) => {
     const input = e.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
     const file = input.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (typeof result === 'string') {
+        setCropImageUrl(result);
+      }
+    };
+    
+    reader.readAsDataURL(file);
+  };
+
+  const handleCroppedImage = async (blob: Blob) => {
     setUploading(true);
+    setCropImageUrl(null);
 
     const formData = new FormData();
-    formData.append('avatar', file);
+    formData.append('avatar', blob, 'avatar.png');
 
     const token = localStorage.getItem('token');
     try {
@@ -722,7 +739,7 @@ const UserSettingsModal: Component<{
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handleFileUpload}
+                  onChange={handleFileSelect}
                   disabled={uploading()}
                 />
                 {uploading() && <p class="upload-status">Uploading...</p>}
@@ -751,6 +768,14 @@ const UserSettingsModal: Component<{
             </button>
           </div>
         </form>
+        <Show when={cropImageUrl()}>
+          <ImageCropper
+            imageUrl={cropImageUrl()!}
+            onCrop={handleCroppedImage}
+            onCancel={() => setCropImageUrl(null)}
+            title="Crop Avatar"
+          />
+        </Show>
       </div>
     </div>
   );
@@ -767,16 +792,31 @@ const ServerSettingsModal: Component<{
   const [icon, setIcon] = createSignal(props.server?.icon || '');
   const [saving, setSaving] = createSignal(false);
   const [uploading, setUploading] = createSignal(false);
+  const [cropImageUrl, setCropImageUrl] = createSignal<string | null>(null);
 
-  const handleFileUpload = async (e: Event) => {
+  const handleFileSelect = (e: Event) => {
     const input = e.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
     const file = input.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (typeof result === 'string') {
+        setCropImageUrl(result);
+      }
+    };
+    
+    reader.readAsDataURL(file);
+  };
+
+  const handleCroppedImage = async (blob: Blob) => {
     setUploading(true);
+    setCropImageUrl(null);
 
     const formData = new FormData();
-    formData.append('icon', file);
+    formData.append('icon', blob, 'server-icon.png');
 
     const token = localStorage.getItem('token');
     try {
@@ -869,7 +909,7 @@ const ServerSettingsModal: Component<{
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handleFileUpload}
+                  onChange={handleFileSelect}
                   disabled={uploading()}
                 />
                 {uploading() && <p class="upload-status">Uploading...</p>}
@@ -902,6 +942,14 @@ const ServerSettingsModal: Component<{
             </button>
           </div>
         </form>
+        <Show when={cropImageUrl()}>
+          <ImageCropper
+            imageUrl={cropImageUrl()!}
+            onCrop={handleCroppedImage}
+            onCancel={() => setCropImageUrl(null)}
+            title="Crop Server Icon"
+          />
+        </Show>
       </div>
     </div>
   );
