@@ -28,10 +28,10 @@ export const ServerList: Component<ServerListProps> = (props) => {
             class="server-item"
             classList={{ active: props.currentServer === server._id }}
             onClick={() => props.onServerSelect(server._id)}
-            title={server.name}
+            title={String(server.name || 'Server')}
           >
             {server.icon ? (
-              <img src={server.icon} alt={server.name} />
+              <img src={server.icon} alt={String(server.name || 'Server')} />
             ) : (
               <div class="server-acronym">
                 {String(server.name || '')

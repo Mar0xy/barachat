@@ -10,7 +10,7 @@ interface ChatAreaProps {
   onDeleteMessage: (messageId: string) => void;
   onTyping: () => void;
   user: User | null;
-  typingText: string;
+  typingText: () => string;
   lightboxImage: () => string | null;
   onLightboxClose: () => void;
   onImageClick: (url: string) => void;

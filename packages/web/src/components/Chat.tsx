@@ -492,6 +492,7 @@ export const Chat: Component = () => {
           channels={channels()}
           currentChannel={currentChannel()}
           currentServer={currentServer()}
+          serverName={servers().find(s => s._id === currentServer())?.name}
           onChannelSelect={handleChannelSelect}
           onCreateChannel={() => setShowCreateChannel(true)}
           onServerSettings={() => setShowServerSettings(true)}
@@ -515,7 +516,7 @@ export const Chat: Component = () => {
             onDeleteMessage={deleteMessage}
             onTyping={handleTyping}
             user={user()}
-            typingText={typingText()}
+            typingText={typingText}
             lightboxImage={lightboxImage}
             onLightboxClose={() => setLightboxImage(null)}
             onImageClick={(url) => setLightboxImage(url)}

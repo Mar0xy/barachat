@@ -5,6 +5,7 @@ interface ChannelListProps {
   channels: Channel[];
   currentChannel: string;
   currentServer: string;
+  serverName?: string;
   onChannelSelect: (channelId: string) => void;
   onCreateChannel: () => void;
   onServerSettings: () => void;
@@ -29,7 +30,7 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
     <div class="channel-list">
       <Show when={props.currentServer}>
         <div class="server-header" onClick={props.onServerSettings}>
-          <span>Server Name</span>
+          <span>{props.serverName || 'Server'}</span>
           <span class="settings-icon">⚙️</span>
         </div>
       </Show>
