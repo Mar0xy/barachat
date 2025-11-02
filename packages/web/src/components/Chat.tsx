@@ -67,7 +67,13 @@ export const Chat: Component = () => {
       });
       if (response.ok) {
         const serverList = await response.json();
-        setServers(serverList);
+        console.log('Servers loaded:', serverList);
+        // Normalize server names to ensure they're strings
+        const normalizedServers = serverList.map((server: Server) => ({
+          ...server,
+          name: typeof server.name === 'string' ? server.name : String(server.name || 'Unnamed Server')
+        }));
+        setServers(normalizedServers);
       }
     } catch (error) {
       console.error('Error loading servers:', error);
@@ -226,7 +232,13 @@ export const Chat: Component = () => {
 
       if (response.ok) {
         const server = await response.json();
-        setServers([...servers(), server]);
+        console.log('Server created:', server);
+        // Ensure name is a string
+        const normalizedServer = {
+          ...server,
+          name: typeof server.name === 'string' ? server.name : String(server.name || 'Unnamed Server')
+        };
+        setServers([...servers(), normalizedServer]);
         setShowCreateServer(false);
         setCurrentServer(server._id);
       }
@@ -560,7 +572,12 @@ export const Chat: Component = () => {
           server={servers().find(s => s._id === currentServer())}
           onClose={() => setShowServerSettings(false)}
           onUpdate={(updatedServer) => {
-            setServers(servers().map(s => s._id === updatedServer._id ? updatedServer : s));
+            // Normalize server name
+            const normalizedServer = {
+              ...updatedServer,
+              name: typeof updatedServer.name === 'string' ? updatedServer.name : String(updatedServer.name || 'Unnamed Server')
+            };
+            setServers(servers().map(s => s._id === normalizedServer._id ? normalizedServer : s));
           }}
         />
       </Show>
