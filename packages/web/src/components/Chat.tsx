@@ -104,7 +104,6 @@ export const Chat: Component = () => {
       });
       if (response.ok) {
         const serverList = await response.json();
-        console.log('Servers loaded:', serverList);
         // Normalize server names to ensure they're strings
         const normalizedServers = serverList.map((server: Server) => ({
           ...server,
@@ -288,7 +287,6 @@ export const Chat: Component = () => {
 
       if (response.ok) {
         const server = await response.json();
-        console.log('Server created:', server);
         // Ensure name is a string
         const normalizedServer = {
           ...server,
