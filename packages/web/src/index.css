@@ -341,6 +341,16 @@ body {
   cursor: not-allowed;
 }
 
+/* Typing Indicator */
+.typing-indicator {
+  padding: 0 16px 8px 72px;
+  font-size: 13px;
+  color: #8e9297;
+  font-style: italic;
+  background: #1e1e1e;
+  height: 24px;
+}
+
 /* Login Page */
 .login-container {
   display: flex;

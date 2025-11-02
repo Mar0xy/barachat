@@ -135,6 +135,8 @@ export const Chat: Component = () => {
   const [showUserSettings, setShowUserSettings] = createSignal(false);
   const [showServerSettings, setShowServerSettings] = createSignal(false);
   const [showCreateChannel, setShowCreateChannel] = createSignal(false);
+  const [typingUsers, setTypingUsers] = createSignal<Map<string, Set<string>>>(new Map());
+  const [typingTimeout, setTypingTimeout] = createSignal<number | null>(null);
   const navigate = useNavigate();
 
   // Fetch servers
@@ -213,6 +215,50 @@ export const Chat: Component = () => {
         if (data.message.channel === currentChannel()) {
           setMessages([...messages(), data.message]);
         }
+      } else if (data.type === 'ChannelStartTyping') {
+        const channelId = data.id;
+        const userId = data.user;
+        const username = data.username;
+        
+        setTypingUsers(prev => {
+          const newMap = new Map(prev);
+          if (!newMap.has(channelId)) {
+            newMap.set(channelId, new Set());
+          }
+          newMap.get(channelId)!.add(username || userId);
+          return newMap;
+        });
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+          setTypingUsers(prev => {
+            const newMap = new Map(prev);
+            const channelUsers = newMap.get(channelId);
+            if (channelUsers) {
+              channelUsers.delete(username || userId);
+              if (channelUsers.size === 0) {
+                newMap.delete(channelId);
+              }
+            }
+            return newMap;
+          });
+        }, 5000);
+      } else if (data.type === 'ChannelStopTyping') {
+        const channelId = data.id;
+        const userId = data.user;
+        const username = data.username;
+        
+        setTypingUsers(prev => {
+          const newMap = new Map(prev);
+          const channelUsers = newMap.get(channelId);
+          if (channelUsers) {
+            channelUsers.delete(username || userId);
+            if (channelUsers.size === 0) {
+              newMap.delete(channelId);
+            }
+          }
+          return newMap;
+        });
       }
     };
 
@@ -254,6 +300,15 @@ export const Chat: Component = () => {
     e.preventDefault();
     if (!messageInput().trim() || !currentChannel()) return;
 
+    // Stop typing indicator when sending
+    const websocket = ws();
+    if (websocket && websocket.readyState === WebSocket.OPEN) {
+      websocket.send(JSON.stringify({
+        type: 'EndTyping',
+        channel: currentChannel()
+      }));
+    }
+
     const token = localStorage.getItem('token');
     try {
       const response = await fetch(`${API_URL}/channels/${currentChannel()}/messages`, {
@@ -262,6 +317,64 @@ export const Chat: Component = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
+        body: JSON.stringify({ content: messageInput() })
+      });
+
+      if (response.ok) {
+        const message = await response.json();
+        setMessages([...messages(), message]);
+        setMessageInput('');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+  const handleTyping = () => {
+    const websocket = ws();
+    if (!websocket || websocket.readyState !== WebSocket.OPEN || !currentChannel()) return;
+
+    // Send typing start event
+    websocket.send(JSON.stringify({
+      type: 'BeginTyping',
+      channel: currentChannel()
+    }));
+
+    // Clear existing timeout
+    if (typingTimeout()) {
+      clearTimeout(typingTimeout()!);
+    }
+
+    // Set timeout to stop typing after 3 seconds of inactivity
+    const timeout = window.setTimeout(() => {
+      websocket.send(JSON.stringify({
+        type: 'EndTyping',
+        channel: currentChannel()
+      }));
+    }, 3000);
+
+    setTypingTimeout(timeout);
+  };
+
+  const getTypingIndicator = () => {
+    const channelId = currentChannel();
+    if (!channelId) return '';
+
+    const users = typingUsers().get(channelId);
+    if (!users || users.size === 0) return '';
+
+    const userArray = Array.from(users);
+    
+    if (userArray.length === 1) {
+      return `${userArray[0]} is typing...`;
+    } else if (userArray.length === 2) {
+      return `${userArray[0]} and ${userArray[1]} are typing...`;
+    } else if (userArray.length === 3) {
+      return `${userArray[0]}, ${userArray[1]}, and ${userArray[2]} are typing...`;
+    } else {
+      return 'Multiple users are typing...';
+    }
+  };
         body: JSON.stringify({ content: messageInput() })
       });
 
@@ -380,13 +493,21 @@ export const Chat: Component = () => {
             )}
           </For>
         </div>
+        <Show when={getTypingIndicator()}>
+          <div class="typing-indicator">
+            {getTypingIndicator()}
+          </div>
+        </Show>
         <div class="message-input">
           <form onSubmit={sendMessage}>
             <input
               type="text"
               placeholder={`Message #${channels().find(c => c._id === currentChannel())?.name || 'channel'}`}
               value={messageInput()}
-              onInput={(e) => setMessageInput(e.currentTarget.value)}
+              onInput={(e) => {
+                setMessageInput(e.currentTarget.value);
+                handleTyping();
+              }}
               disabled={!currentChannel()}
             />
           </form>

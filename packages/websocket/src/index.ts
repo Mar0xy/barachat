@@ -84,18 +84,22 @@ async function handleConnection(ws: WebSocket) {
         ws.send(JSON.stringify({ type: EventType.Pong }));
       } else if (message.type === 'BeginTyping') {
         if (client) {
+          const user = await db.users.findOne({ _id: client.userId });
           broadcast({
             type: EventType.ChannelStartTyping,
             id: message.channel,
-            user: client.userId
+            user: client.userId,
+            username: user?.displayName || user?.username
           }, client.sessionId);
         }
       } else if (message.type === 'EndTyping') {
         if (client) {
+          const user = await db.users.findOne({ _id: client.userId });
           broadcast({
             type: EventType.ChannelStopTyping,
             id: message.channel,
-            user: client.userId
+            user: client.userId,
+            username: user?.displayName || user?.username
           }, client.sessionId);
         }
       }
