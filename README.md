@@ -10,34 +10,39 @@ A modern chat platform built with TypeScript
 
 ## Overview
 
-Barachat is a TypeScript implementation of a chat platform similar to Stoat/Revolt. It features:
+Barachat is a modern, self-hosted chat platform built with TypeScript. It's inspired by platforms like Revolt and Discord, featuring real-time messaging, servers, channels, and direct messages. The project is structured as a monorepo with separate packages for the API, WebSocket server, web frontend, and shared components.
 
-- **REST API Server** - Express-based API for all platform operations
-- **WebSocket Server** - Real-time communication using WebSockets
-- **Web Frontend** - Modern web client built with Solid.js
-- **Database Layer** - MongoDB for persistence and Redis for caching
-- **Modular Architecture** - Organized as a monorepo with separate packages
+Key features:
+
+Key features:
+
+- **REST API Server** - Express-based API for authentication, user management, servers, channels, and messages
+- **WebSocket Server** - Real-time bidirectional communication for instant message delivery and presence updates
+- **Web Frontend** - Modern, responsive web client built with Solid.js and TypeScript
+- **Database Layer** - MongoDB for data persistence and Redis for caching and pub/sub messaging
+- **Modular Architecture** - Organized as a pnpm monorepo with clearly separated packages and concerns
+- **Docker Support** - Full Docker Compose setup for easy deployment with nginx reverse proxy
 
 ## Architecture
 
 This project is a monorepo containing the following packages:
 
-| Package | Description |
-|---------|-------------|
-| `@barachat/models` | Core data models and type definitions |
-| `@barachat/config` | Configuration management |
-| `@barachat/database` | Database layer (MongoDB + Redis) |
-| `@barachat/api` | REST API server (Express) |
-| `@barachat/websocket` | WebSocket events server |
-| `@barachat/web` | Web frontend (Solid.js) |
+| Package | Description | Key Technologies |
+|---------|-------------|------------------|
+| `@barachat/models` | Core data models and type definitions | TypeScript interfaces and enums |
+| `@barachat/config` | Configuration management and environment variables | dotenv |
+| `@barachat/database` | Database layer with MongoDB and Redis clients | MongoDB driver, Redis client |
+| `@barachat/api` | REST API server | Express, JWT, bcrypt |
+| `@barachat/websocket` | WebSocket events server for real-time communication | ws library |
+| `@barachat/web` | Web frontend application | Solid.js, Vite |
 
 ## Prerequisites
 
 Before getting started, ensure you have:
 
-- **Node.js** >= 18
-- **pnpm** >= 8 (run `corepack enable` to install)
-- **Docker** and **Docker Compose** (for databases)
+- **Node.js** >= 18 (v20 recommended)
+- **pnpm** >= 8 (enable with `corepack enable`)
+- **Docker** and **Docker Compose** (for databases or production deployment)
 - **Git**
 
 ## Quick Start
@@ -106,10 +111,10 @@ docker compose down -v
 
 This mode runs services locally with hot-reload for faster development iteration.
 
-#### Prerequisites
-- **Node.js** >= 18
-- **pnpm** >= 8 (run `corepack enable` to install)
-- **Docker** and **Docker Compose** (for databases)
+#### Prerequisites for Development Mode
+- **Node.js** >= 18 (v20 recommended)
+- **pnpm** >= 8 (enable with `corepack enable`)
+- **Docker** and **Docker Compose** (for running MongoDB and Redis)
 - **Git**
 
 #### 1. Clone the repository
@@ -201,15 +206,33 @@ kill <PID>
 ```
 barachat/
 ├── packages/
-│   ├── models/          # Data models and types
-│   ├── config/          # Configuration
-│   ├── database/        # Database layer
-│   ├── api/            # REST API server
-│   ├── websocket/      # WebSocket server
-│   └── web/            # Web frontend
-├── docker-compose.yml  # Database services
-├── package.json        # Root package.json
-└── pnpm-workspace.yaml # pnpm workspace config
+│   ├── models/          # Shared TypeScript types and interfaces
+│   │   └── src/
+│   │       ├── index.ts       # Core models (User, Server, Channel, Message, etc.)
+│   │       └── events.ts      # WebSocket event types
+│   ├── config/          # Configuration management
+│   │   └── src/index.ts       # Environment variable handling
+│   ├── database/        # Database abstraction layer
+│   │   └── src/index.ts       # MongoDB and Redis clients, collections
+│   ├── api/             # REST API server
+│   │   └── src/
+│   │       ├── index.ts       # Express server setup
+│   │       ├── middleware/    # Authentication middleware
+│   │       └── routes/        # API route handlers
+│   ├── websocket/       # WebSocket server
+│   │   └── src/index.ts       # WebSocket connection handling, event broadcasting
+│   └── web/             # Web frontend
+│       └── src/
+│           ├── components/    # React-like Solid.js components
+│           ├── utils/         # API client, constants
+│           └── App.tsx        # Main application component
+├── docker-compose.yml   # Docker services configuration
+├── Dockerfile.api       # API server container
+├── Dockerfile.websocket # WebSocket server container
+├── Dockerfile.web       # Web frontend container
+├── nginx-proxy.conf     # Reverse proxy configuration
+├── package.json         # Root package.json with workspace scripts
+└── pnpm-workspace.yaml  # pnpm workspace configuration
 ```
 
 ### Available Scripts
@@ -222,14 +245,11 @@ pnpm dev:web        # Run web frontend in dev mode
 
 # Building
 pnpm build          # Build all packages
-pnpm build:deps     # Build only core dependencies
+pnpm build:deps     # Build only core dependencies (models, config, database)
 
 # Code Quality
 pnpm lint           # Lint all packages
 pnpm fmt            # Format code with Prettier
-
-# Testing
-pnpm test           # Run tests in all packages
 ```
 
 ### Database Management
@@ -250,82 +270,212 @@ docker compose down -v
 
 ## API Endpoints
 
+The REST API provides the following endpoints (all authenticated endpoints require `Authorization: Bearer <token>` header):
+
 ### Authentication
 
 - `POST /auth/register` - Register a new user
-- `POST /auth/login` - Login and get a token
+  - Body: `{ username, email, password }`
+  - Returns: `{ token, user }`
+- `POST /auth/login` - Login and get a JWT token
+  - Body: `{ email, password }`
+  - Returns: `{ token, user }`
 
 ### Users
 
-- `GET /users/@me` - Get current user
+- `GET /users/@me` - Get current authenticated user
 - `GET /users/:userId` - Get user by ID
-- `PATCH /users/@me` - Update current user
+- `PATCH /users/@me` - Update current user profile
+  - Body: `{ username?, displayName?, bio?, avatar? }`
 
 ### Channels
 
-- `GET /channels/:channelId` - Get channel info
-- `POST /channels/create-dm` - Create a direct message
-- `GET /channels/:channelId/messages` - Get messages
-- `POST /channels/:channelId/messages` - Send a message
+- `GET /channels/:channelId` - Get channel information
+- `POST /channels/create-dm` - Create a direct message channel
+  - Body: `{ recipientId }`
+- `GET /channels/:channelId/messages` - Get messages from a channel
+  - Query: `?limit=50&before=messageId`
+- `POST /channels/:channelId/messages` - Send a message to a channel
+  - Body: `{ content, attachments? }`
+- `DELETE /channels/:channelId/messages/:messageId` - Delete a message
 
 ### Servers
 
 - `POST /servers/create` - Create a new server
-- `GET /servers/:serverId` - Get server info
+  - Body: `{ name, description? }`
+- `GET /servers/:serverId` - Get server information
+- `PATCH /servers/:serverId` - Update server settings
+- `DELETE /servers/:serverId` - Delete a server
+- `POST /servers/:serverId/join` - Join a server (via invite)
+- `GET /servers/:serverId/members` - Get server members
+
+### File Uploads
+
+- `POST /upload/avatar` - Upload user avatar
+- `POST /upload/server-icon` - Upload server icon  
+- `POST /upload/attachment` - Upload message attachment
 
 ## WebSocket Events
 
-The WebSocket server supports real-time events:
+The WebSocket server handles real-time bidirectional communication. Connect to `ws://localhost:3001` (development) or `ws://localhost:8080/ws` (Docker).
 
-- **Connection**: `Authenticate`, `Ready`, `Pong`
-- **Messages**: `Message`, `MessageUpdate`, `MessageDelete`
-- **Channels**: `ChannelCreate`, `ChannelUpdate`, `ChannelDelete`
-- **Typing**: `BeginTyping`, `EndTyping`
-- **Presence**: `UserPresence`
-- **Servers**: `ServerUpdate`, `ServerDelete`, `ServerMemberJoin`, etc.
+### Client → Server Events
+
+- `Authenticate` - Authenticate the WebSocket connection
+  - Payload: `{ type: 'Authenticate', token: 'jwt_token' }`
+- `Ping` - Keep-alive ping
+- `BeginTyping` / `Typing` - User started typing in a channel
+  - Payload: `{ type: 'BeginTyping', channel: 'channelId' }`
+- `EndTyping` / `StopTyping` - User stopped typing in a channel
+  - Payload: `{ type: 'EndTyping', channel: 'channelId' }`
+
+### Server → Client Events
+
+**Connection Events:**
+- `Authenticated` - Authentication successful
+- `Ready` - Initial data sync (users, servers, channels, members)
+- `Pong` - Response to ping
+- `Error` - Error message
+
+**Message Events:**
+- `Message` - New message received
+- `MessageUpdate` - Message edited
+- `MessageDelete` - Message deleted
+- `MessageReact` - Reaction added to message
+- `MessageUnreact` - Reaction removed from message
+
+**Channel Events:**
+- `ChannelCreate` - New channel created
+- `ChannelUpdate` - Channel updated
+- `ChannelDelete` - Channel deleted
+- `ChannelStartTyping` / `Typing` - User started typing
+- `ChannelStopTyping` / `StopTyping` - User stopped typing
+
+**Server Events:**
+- `ServerUpdate` - Server settings updated
+- `ServerDelete` - Server deleted
+- `ServerMemberJoin` - User joined server
+- `ServerMemberLeave` - User left server
+- `ServerMemberUpdate` - Member settings updated
+
+**User Events:**
+- `UserUpdate` - User profile updated
+- `UserPresence` - User online/offline status changed
+- `UserRelationship` - Friend relationship changed
 
 ## Configuration
 
-Environment variables can be configured in `.env`:
+### Environment Variables
+
+Create a `.env` file in the root directory (copy from `.env.example`):
 
 ```env
-# Database
-MONGODB_URI=mongodb://localhost:27017/barachat
-REDIS_URL=redis://localhost:6379
+# Database Configuration
+MONGODB_URI=mongodb://localhost:27017/barachat  # For local dev
+# MONGODB_URI=mongodb://mongodb:27017/barachat  # For Docker (auto-set)
+REDIS_URL=redis://localhost:6379                # For local dev
+# REDIS_URL=redis://redis:6379                  # For Docker (auto-set)
 
-# Server
-API_PORT=3000
-WS_PORT=3001
-HOST=0.0.0.0
+# Server Configuration
+API_PORT=3000                # Port for REST API
+WS_PORT=3001                 # Port for WebSocket server
+HOST=0.0.0.0                 # Listen on all interfaces
 
-# Security
-JWT_SECRET=your-secret-key-here
+# Security (CRITICAL: Change in production!)
+JWT_SECRET=change-me-in-production-to-a-secure-random-string
 
 # Frontend
-APP_URL=http://localhost:5173
+APP_URL=http://localhost:5173  # For CORS configuration
 ```
+
+### Frontend Environment Variables
+
+Create `packages/web/.env` (copy from `packages/web/.env.example`):
+
+```env
+# For local development
+VITE_API_URL=http://localhost:3000
+VITE_WS_URL=ws://localhost:3001
+
+# For Docker deployment, these are set during build:
+# VITE_API_URL=/api
+# VITE_WS_URL=/ws
+```
+
+### Production Security
+
+⚠️ **Important for production deployments:**
+
+1. **Generate a strong JWT secret:**
+   ```bash
+   openssl rand -hex 32
+   ```
+   Set this as `JWT_SECRET` in your `.env` file.
+
+2. **Use HTTPS:** Deploy behind a reverse proxy with SSL/TLS (Cloudflare, nginx with Let's Encrypt, etc.)
+
+3. **Secure MongoDB and Redis:** Use authentication and restrict network access
+
+4. **Regular backups:** Set up automated backups for MongoDB data
 
 ## Production Deployment
 
-### Build for production
+### Using Docker Compose (Recommended)
+
+The easiest way to deploy Barachat in production is using Docker Compose. See [DOCKER.md](DOCKER.md) for detailed instructions.
 
 ```bash
-# Build all packages
+# Set a secure JWT secret
+echo "JWT_SECRET=$(openssl rand -hex 32)" > .env
+
+# Build and start all services
+docker compose up -d
+
+# View logs
+docker compose logs -f
+```
+
+The application will be available at `http://localhost:8080` (or your configured port).
+
+### Manual Production Deployment
+
+If you prefer to run without Docker:
+
+#### 1. Build all packages
+
+```bash
+pnpm install --frozen-lockfile
 pnpm build
 ```
 
-### Run in production
+#### 2. Set up environment variables
+
+Create a `.env` file with production values (especially a secure `JWT_SECRET`).
+
+#### 3. Start services
+
+You'll need to run these services (consider using PM2, systemd, or similar):
 
 ```bash
 # Start API server
-node packages/api/dist/index.js
+NODE_ENV=production node packages/api/dist/index.js
 
-# Start WebSocket server
-node packages/websocket/dist/index.js
+# Start WebSocket server  
+NODE_ENV=production node packages/websocket/dist/index.js
 
-# Serve web frontend (using a static file server)
-# The built files are in packages/web/dist
+# Serve web frontend
+# Use nginx, Apache, or any static file server to serve packages/web/dist
 ```
+
+#### 4. Set up reverse proxy
+
+Configure nginx or another reverse proxy to:
+- Serve the web frontend at `/`
+- Proxy API requests to the API server at `/api`
+- Proxy WebSocket connections to the WebSocket server at `/ws`
+- Serve uploaded files from the uploads directory
+
+Example nginx configuration is available in `nginx-proxy.conf`.
 
 ## Comparison with Stoat/Revolt
 
