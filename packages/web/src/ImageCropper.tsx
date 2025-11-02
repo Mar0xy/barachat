@@ -21,8 +21,8 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
   const [imageLoaded, setImageLoaded] = createSignal(false);
   const [imageSize, setImageSize] = createSignal({ width: 0, height: 0 });
 
-  // aspectRatio could be used for non-square crops in future
-  // const aspectRatio = props.aspectRatio || 1; // Default to square
+  // Note: aspectRatio prop is currently unused. The cropper always produces square crops.
+  // Future enhancement: Support custom aspect ratios for rectangular crops.
 
   onMount(() => {
     if (imageRef) {
