@@ -25,6 +25,8 @@ export const GifPicker: Component<GifPickerProps> = (props) => {
   const [gifs, setGifs] = createSignal<TenorGif[]>([]);
   const [loading, setLoading] = createSignal(false);
   const [selectedCategory, setSelectedCategory] = createSignal('trending');
+  const [nextPos, setNextPos] = createSignal<string>('');
+  let contentRef: HTMLDivElement | undefined;
 
   const categories = [
     { id: 'trending', label: 'Trending', search: '' },
@@ -38,25 +40,46 @@ export const GifPicker: Component<GifPickerProps> = (props) => {
     { id: 'party', label: '🎉', search: 'party' },
   ];
 
-  const fetchGifs = async (query: string = '') => {
+  const fetchGifs = async (query: string = '', append: boolean = false) => {
     setLoading(true);
     try {
       let url: string;
+      const pos = append ? nextPos() : '';
+      const posParam = pos ? `&pos=${pos}` : '';
+      
       if (query.trim() === '') {
         // Fetch trending GIFs
-        url = `https://tenor.googleapis.com/v2/featured?key=${TENOR_API_KEY}&client_key=${TENOR_CLIENT_KEY}&limit=20`;
+        url = `https://tenor.googleapis.com/v2/featured?key=${TENOR_API_KEY}&client_key=${TENOR_CLIENT_KEY}&limit=30${posParam}`;
       } else {
         // Search GIFs
-        url = `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${TENOR_API_KEY}&client_key=${TENOR_CLIENT_KEY}&limit=20`;
+        url = `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${TENOR_API_KEY}&client_key=${TENOR_CLIENT_KEY}&limit=30${posParam}`;
       }
       
       const response = await fetch(url);
       const data = await response.json();
-      setGifs(data.results || []);
+      
+      if (append) {
+        setGifs([...gifs(), ...(data.results || [])]);
+      } else {
+        setGifs(data.results || []);
+      }
+      
+      setNextPos(data.next || '');
     } catch (error) {
       console.error('Error fetching GIFs:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleScroll = () => {
+    if (!contentRef || loading()) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = contentRef;
+    
+    // Load more when user scrolls near bottom (within 100px)
+    if (scrollHeight - scrollTop - clientHeight < 100 && nextPos()) {
+      fetchGifs(searchQuery(), true);
     }
   };
 
@@ -70,6 +93,7 @@ export const GifPicker: Component<GifPickerProps> = (props) => {
 
   const handleCategoryClick = (categorySearch: string) => {
     setSearchQuery(categorySearch);
+    setNextPos('');
     fetchGifs(categorySearch);
   };
 
@@ -121,7 +145,7 @@ export const GifPicker: Component<GifPickerProps> = (props) => {
           </For>
         </div>
 
-        <div class="gif-picker-content">
+        <div class="gif-picker-content" ref={contentRef} onScroll={handleScroll}>
           <Show when={loading()}>
             <div class="gif-picker-loading">Loading GIFs...</div>
           </Show>
