@@ -1,7 +1,7 @@
 import { Component, createSignal, Show } from 'solid-js';
 import { User } from '../../types';
 import { API_URL } from '../../utils/constants';
-import ImageCropper from '../../ImageCropper';
+import { ImageCropper } from '../../ImageCropper';
 
 interface UserSettingsModalProps {
   user: User | null;
