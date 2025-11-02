@@ -19,7 +19,6 @@ interface ChatAreaProps {
   pendingAttachments: string[];
   onRemoveAttachment: (url: string) => void;
   onClearAttachments: () => void;
-  onAddAttachment?: (url: string) => void;
   uploadingAttachment: boolean;
   onAttachmentUpload: (files: FileList | null) => void;
   fileInputRef?: HTMLInputElement;
@@ -51,11 +50,24 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Extract URLs from message content for auto-embedding
+  const extractUrls = (text: string): string[] => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.match(urlRegex) || [];
+  };
+
+  // Check if URL is an embeddable image/GIF
+  const isEmbeddableUrl = (url: string): boolean => {
+    // Support Tenor GIFs and common image formats
+    return (
+      url.includes('tenor.com') ||
+      /\.(gif|jpg|jpeg|png|webp)(\?|$)/i.test(url)
+    );
+  };
+
   const handleGifSelect = (gifUrl: string) => {
-    // Add GIF as an attachment instead of in message text
-    if (props.onAddAttachment) {
-      props.onAddAttachment(gifUrl);
-    }
+    // Insert GIF URL into message content
+    props.onMessageInputChange(props.messageInput + gifUrl + ' ');
     setShowGifPicker(false);
   };
 
@@ -118,6 +130,23 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
                     </Show>
                   </div>
                   <div class="message-text">{message.content}</div>
+                  
+                  {/* Auto-embed URLs found in message content */}
+                  <Show when={message.content}>
+                    <For each={extractUrls(message.content).filter(isEmbeddableUrl)}>
+                      {(url) => (
+                        <div class="message-embed">
+                          <img
+                            src={url}
+                            alt="embedded content"
+                            class="message-image"
+                            onClick={() => props.onImageClick(url)}
+                          />
+                        </div>
+                      )}
+                    </For>
+                  </Show>
+
                   <Show when={message.attachments && message.attachments.length > 0}>
                     <div class="message-attachments">
                       <For each={message.attachments}>

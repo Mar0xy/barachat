@@ -446,11 +446,6 @@ export const Chat: Component = () => {
     setPendingAttachments(pendingAttachments().filter((a) => a !== url));
   };
 
-  // Add pending attachment (for GIFs from Tenor)
-  const addPendingAttachment = (url: string) => {
-    setPendingAttachments([...pendingAttachments(), url]);
-  };
-
   // Handle typing indicator
   const handleTyping = () => {
     const socket = ws();
@@ -787,7 +782,6 @@ export const Chat: Component = () => {
               pendingAttachments={pendingAttachments()}
               onRemoveAttachment={removePendingAttachment}
               onClearAttachments={() => setPendingAttachments([])}
-              onAddAttachment={addPendingAttachment}
               uploadingAttachment={uploadingAttachment()}
               onAttachmentUpload={handleAttachmentUpload}
               fileInputRef={fileInputRef}

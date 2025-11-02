@@ -987,6 +987,10 @@ body {
   margin-top: 8px;
 }
 
+.message-embed {
+  margin-top: 8px;
+}
+
 .message-image {
   max-width: 300px;
   max-height: 300px;
