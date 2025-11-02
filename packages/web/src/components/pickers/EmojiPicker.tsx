@@ -142,7 +142,7 @@ export const EmojiPicker: Component<EmojiPickerProps> = (props) => {
   };
 
   // Parse emojis to Twemoji images
-  let emojiRefs: HTMLDivElement[] = [];
+  const emojiRefs: HTMLDivElement[] = [];
   onMount(() => {
     emojiRefs.forEach((ref) => {
       if (ref) {
