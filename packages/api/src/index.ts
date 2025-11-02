@@ -21,7 +21,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Routes
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     name: 'Barachat API',
     version: '0.1.0',
     revolt: 'compatible'
@@ -38,7 +38,7 @@ app.use('/upload', uploadsRouter);
 async function start() {
   try {
     await db.connect();
-    
+
     app.listen(config.server.apiPort, config.server.host, () => {
       console.log(`API server running on http://${config.server.host}:${config.server.apiPort}`);
     });

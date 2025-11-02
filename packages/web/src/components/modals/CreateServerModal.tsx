@@ -23,7 +23,9 @@ export const CreateServerModal: Component<CreateServerModalProps> = (props) => {
       <div class="modal" onClick={(e) => e.stopPropagation()}>
         <div class="modal-header">
           <h2>Create a Server</h2>
-          <button class="modal-close" onClick={props.onClose}>×</button>
+          <button class="modal-close" onClick={props.onClose}>
+            ×
+          </button>
         </div>
         <form onSubmit={handleSubmit}>
           <div class="modal-body">
@@ -48,8 +50,12 @@ export const CreateServerModal: Component<CreateServerModalProps> = (props) => {
             </label>
           </div>
           <div class="modal-footer">
-            <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
-            <button type="submit" class="button-primary">Create Server</button>
+            <button type="button" class="button-secondary" onClick={props.onClose}>
+              Cancel
+            </button>
+            <button type="submit" class="button-primary">
+              Create Server
+            </button>
           </div>
         </form>
       </div>

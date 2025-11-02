@@ -9,9 +9,9 @@ export interface FetchOptions extends RequestInit {
  */
 export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
   const token = options.token || localStorage.getItem('token');
-  
+
   const headers: HeadersInit = {
-    ...options.headers,
+    ...options.headers
   };
 
   if (token) {
@@ -24,7 +24,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
 
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
-    headers,
+    headers
   });
 
   return response;
@@ -35,7 +35,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
  */
 export async function apiJSON<T = any>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const response = await apiFetch(endpoint, options);
-  
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
     throw new Error(error.error || `HTTP ${response.status}`);

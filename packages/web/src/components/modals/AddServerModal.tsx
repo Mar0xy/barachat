@@ -53,7 +53,9 @@ export const AddServerModal: Component<AddServerModalProps> = (props) => {
         <Show when={mode() === 'choose'}>
           <div class="modal-header">
             <h2>Add a Server</h2>
-            <button class="modal-close" onClick={props.onClose}>×</button>
+            <button class="modal-close" onClick={props.onClose}>
+              ×
+            </button>
           </div>
           <div class="modal-body">
             <div class="add-server-choice">
@@ -77,9 +79,13 @@ export const AddServerModal: Component<AddServerModalProps> = (props) => {
 
         <Show when={mode() === 'create'}>
           <div class="modal-header">
-            <button class="modal-back" onClick={() => setMode('choose')}>←</button>
+            <button class="modal-back" onClick={() => setMode('choose')}>
+              ←
+            </button>
             <h2>Create a Server</h2>
-            <button class="modal-close" onClick={props.onClose}>×</button>
+            <button class="modal-close" onClick={props.onClose}>
+              ×
+            </button>
           </div>
           <form onSubmit={handleCreateSubmit}>
             <div class="modal-body">
@@ -104,17 +110,25 @@ export const AddServerModal: Component<AddServerModalProps> = (props) => {
               </label>
             </div>
             <div class="modal-footer">
-              <button type="button" class="button-secondary" onClick={() => setMode('choose')}>Back</button>
-              <button type="submit" class="button-primary">Create Server</button>
+              <button type="button" class="button-secondary" onClick={() => setMode('choose')}>
+                Back
+              </button>
+              <button type="submit" class="button-primary">
+                Create Server
+              </button>
             </div>
           </form>
         </Show>
 
         <Show when={mode() === 'join'}>
           <div class="modal-header">
-            <button class="modal-back" onClick={() => setMode('choose')}>←</button>
+            <button class="modal-back" onClick={() => setMode('choose')}>
+              ←
+            </button>
             <h2>Join a Server</h2>
-            <button class="modal-close" onClick={props.onClose}>×</button>
+            <button class="modal-close" onClick={props.onClose}>
+              ×
+            </button>
           </div>
           <form onSubmit={handleJoinSubmit}>
             <div class="modal-body">
@@ -134,13 +148,15 @@ export const AddServerModal: Component<AddServerModalProps> = (props) => {
               <Show when={error()}>
                 <div class="error-message">{error()}</div>
               </Show>
-              <p class="help-text">
-                Invite codes look like: 01ARZ3NDEKTSV4RRFFQ69G5FAV
-              </p>
+              <p class="help-text">Invite codes look like: 01ARZ3NDEKTSV4RRFFQ69G5FAV</p>
             </div>
             <div class="modal-footer">
-              <button type="button" class="button-secondary" onClick={() => setMode('choose')}>Back</button>
-              <button type="submit" class="button-primary">Join Server</button>
+              <button type="button" class="button-secondary" onClick={() => setMode('choose')}>
+                Back
+              </button>
+              <button type="submit" class="button-primary">
+                Join Server
+              </button>
             </div>
           </form>
         </Show>

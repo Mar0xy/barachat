@@ -15,10 +15,10 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
   const [sending, setSending] = createSignal(false);
 
   const isCurrentUser = createMemo(() => props.user?._id === props.currentUser?._id);
-  
+
   const friendshipStatus = createMemo(() => {
     if (!props.user || !props.friends) return null;
-    return props.friends.find(f => f._id === props.user!._id);
+    return props.friends.find((f) => f._id === props.user!._id);
   });
 
   const isFriend = createMemo(() => {
@@ -33,16 +33,16 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
 
   const sendFriendRequest = async () => {
     if (!props.user) return;
-    
+
     setSending(true);
     const token = localStorage.getItem('token');
-    
+
     try {
       const response = await fetch(`${API_URL}/users/@me/relationships/${props.user._id}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
         alert('Friend request sent!');
         props.onRefresh?.();
@@ -56,7 +56,7 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
 
   const sendDirectMessage = async () => {
     if (!props.user) return;
-    
+
     if (props.onSendDM) {
       props.onSendDM(props.user._id);
     } else {
@@ -66,7 +66,7 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
 
   const getPresenceText = () => {
     if (!props.user?.status?.presence) return 'Offline';
-    
+
     switch (props.user.status.presence) {
       case 'Online':
         return 'Online';
@@ -85,7 +85,7 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
     if (!props.user?.status?.presence || props.user.status.presence === 'Invisible') {
       return 'offline';
     }
-    
+
     switch (props.user.status.presence) {
       case 'Online':
         return 'online';
@@ -103,14 +103,20 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
       <div class="modal-overlay" onClick={props.onClose}>
         <div class="modal user-profile-modal" onClick={(e) => e.stopPropagation()}>
           <div class="profile-banner">
-            <button class="modal-close profile-close" onClick={props.onClose}>×</button>
+            <button class="modal-close profile-close" onClick={props.onClose}>
+              ×
+            </button>
           </div>
-          
+
           <div class="profile-content">
             <div class="profile-avatar-section">
               <div class="profile-avatar-wrapper">
                 {props.user!.avatar ? (
-                  <img src={props.user!.avatar} alt={props.user!.username} class="profile-avatar-large" />
+                  <img
+                    src={props.user!.avatar}
+                    alt={props.user!.username}
+                    class="profile-avatar-large"
+                  />
                 ) : (
                   <div class="profile-avatar-large profile-avatar-placeholder">
                     {props.user!.username[0].toUpperCase()}
@@ -158,8 +164,8 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
                     Send Message
                   </button>
                   <Show when={!isFriend() && !hasPendingRequest()}>
-                    <button 
-                      class="button-secondary" 
+                    <button
+                      class="button-secondary"
                       onClick={sendFriendRequest}
                       disabled={sending()}
                     >
@@ -168,7 +174,9 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
                   </Show>
                   <Show when={hasPendingRequest()}>
                     <button class="button-secondary" disabled>
-                      {friendshipStatus()?.relationshipStatus === 'Outgoing' ? 'Request Sent' : 'Pending Request'}
+                      {friendshipStatus()?.relationshipStatus === 'Outgoing'
+                        ? 'Request Sent'
+                        : 'Pending Request'}
                     </button>
                   </Show>
                   <Show when={isFriend()}>

@@ -39,7 +39,7 @@ export enum EventType {
 
   // Emoji Events
   EmojiCreate = 'EmojiCreate',
-  EmojiDelete = 'EmojiDelete',
+  EmojiDelete = 'EmojiDelete'
 }
 
 export interface WebSocketEvent {

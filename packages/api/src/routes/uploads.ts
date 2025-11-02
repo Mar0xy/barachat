@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
     }
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
     cb(null, file.fieldname + '-' + uniqueSuffix + ext);
   }
@@ -48,51 +48,66 @@ const upload = multer({
 });
 
 // Upload avatar
-uploadsRouter.post('/avatar', authenticate, upload.single('avatar'), async (req: AuthRequestWithFile, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
+uploadsRouter.post(
+  '/avatar',
+  authenticate,
+  upload.single('avatar'),
+  async (req: AuthRequestWithFile, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
 
-    const avatarUrl = `/uploads/${req.file.filename}`;
-    res.json({ url: avatarUrl });
-  } catch (error) {
-    console.error('Error uploading avatar:', error);
-    res.status(500).json({ error: 'Internal server error' });
+      const avatarUrl = `/uploads/${req.file.filename}`;
+      res.json({ url: avatarUrl });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-});
+);
 
 // Upload server icon
-uploadsRouter.post('/server-icon', authenticate, upload.single('icon'), async (req: AuthRequestWithFile, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
+uploadsRouter.post(
+  '/server-icon',
+  authenticate,
+  upload.single('icon'),
+  async (req: AuthRequestWithFile, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
 
-    const iconUrl = `/uploads/${req.file.filename}`;
-    res.json({ url: iconUrl });
-  } catch (error) {
-    console.error('Error uploading server icon:', error);
-    res.status(500).json({ error: 'Internal server error' });
+      const iconUrl = `/uploads/${req.file.filename}`;
+      res.json({ url: iconUrl });
+    } catch (error) {
+      console.error('Error uploading server icon:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-});
+);
 
 // Upload message attachment
-uploadsRouter.post('/attachment', authenticate, upload.single('file'), async (req: AuthRequestWithFile, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
+uploadsRouter.post(
+  '/attachment',
+  authenticate,
+  upload.single('file'),
+  async (req: AuthRequestWithFile, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
 
-    const attachmentUrl = `/uploads/${req.file.filename}`;
-    res.json({ 
-      url: attachmentUrl,
-      filename: req.file.originalname,
-      size: req.file.size,
-      mimetype: req.file.mimetype
-    });
-  } catch (error) {
-    console.error('Error uploading attachment:', error);
-    res.status(500).json({ error: 'Internal server error' });
+      const attachmentUrl = `/uploads/${req.file.filename}`;
+      res.json({
+        url: attachmentUrl,
+        filename: req.file.originalname,
+        size: req.file.size,
+        mimetype: req.file.mimetype
+      });
+    } catch (error) {
+      console.error('Error uploading attachment:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-});
+);

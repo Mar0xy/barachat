@@ -26,9 +26,9 @@ export const EditChannelModal: Component<EditChannelModalProps> = (props) => {
       // For categories, ask if they want to delete channels too
       const deleteChannels = confirm(
         `Do you want to delete all channels in "${props.channel.name}" category?\n\n` +
-        `Click OK to delete channels, or Cancel to only delete the category (channels will become uncategorized).`
+          `Click OK to delete channels, or Cancel to only delete the category (channels will become uncategorized).`
       );
-      
+
       if (confirm(`Are you sure you want to delete the "${props.channel.name}" category?`)) {
         props.onDelete(props.channel._id, deleteChannels);
         props.onClose();
@@ -47,7 +47,9 @@ export const EditChannelModal: Component<EditChannelModalProps> = (props) => {
       <div class="modal" onClick={(e) => e.stopPropagation()}>
         <div class="modal-header">
           <h2>Edit {props.channel.channelType === 'Category' ? 'Category' : 'Channel'}</h2>
-          <button class="modal-close" onClick={props.onClose}>×</button>
+          <button class="modal-close" onClick={props.onClose}>
+            ×
+          </button>
         </div>
         <form class="modal-body" onSubmit={handleSubmit}>
           <label>
@@ -56,7 +58,9 @@ export const EditChannelModal: Component<EditChannelModalProps> = (props) => {
               type="text"
               value={name()}
               onInput={(e) => setName(e.currentTarget.value)}
-              placeholder={props.channel.channelType === 'Category' ? 'category-name' : 'channel-name'}
+              placeholder={
+                props.channel.channelType === 'Category' ? 'category-name' : 'channel-name'
+              }
               required
             />
           </label>
@@ -64,15 +68,10 @@ export const EditChannelModal: Component<EditChannelModalProps> = (props) => {
           <Show when={props.channel.channelType !== 'Category'}>
             <label>
               Category
-              <select
-                value={category()}
-                onInput={(e) => setCategory(e.currentTarget.value)}
-              >
+              <select value={category()} onInput={(e) => setCategory(e.currentTarget.value)}>
                 <option value="">No Category</option>
                 <For each={props.categories}>
-                  {(cat) => (
-                    <option value={cat._id}>{cat.name}</option>
-                  )}
+                  {(cat) => <option value={cat._id}>{cat.name}</option>}
                 </For>
               </select>
             </label>

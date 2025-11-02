@@ -50,7 +50,9 @@ export const CreateChannelModal: Component<CreateChannelModalProps> = (props) =>
       <div class="modal" onClick={(e) => e.stopPropagation()}>
         <div class="modal-header">
           <h2>Create {channelType() === 'category' ? 'Category' : 'Text Channel'}</h2>
-          <button class="modal-close" onClick={props.onClose}>×</button>
+          <button class="modal-close" onClick={props.onClose}>
+            ×
+          </button>
         </div>
         <form onSubmit={handleSubmit}>
           <div class="modal-body">
@@ -59,9 +61,9 @@ export const CreateChannelModal: Component<CreateChannelModalProps> = (props) =>
               <select
                 value={channelType()}
                 onChange={(e) => setChannelType(e.currentTarget.value as 'text' | 'category')}
-                style={{ 
-                  width: '100%', 
-                  padding: '10px', 
+                style={{
+                  width: '100%',
+                  padding: '10px',
                   'margin-top': '8px',
                   background: '#2a2a2a',
                   border: '1px solid #2a2a2a',
@@ -101,9 +103,9 @@ export const CreateChannelModal: Component<CreateChannelModalProps> = (props) =>
                     <select
                       value={selectedCategory()}
                       onChange={(e) => setSelectedCategory(e.currentTarget.value)}
-                      style={{ 
-                        width: '100%', 
-                        padding: '10px', 
+                      style={{
+                        width: '100%',
+                        padding: '10px',
                         'margin-top': '8px',
                         background: '#2a2a2a',
                         border: '1px solid #2a2a2a',
@@ -123,8 +125,12 @@ export const CreateChannelModal: Component<CreateChannelModalProps> = (props) =>
             )}
           </div>
           <div class="modal-footer">
-            <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
-            <button type="submit" class="button-primary">Create {channelType() === 'category' ? 'Category' : 'Channel'}</button>
+            <button type="button" class="button-secondary" onClick={props.onClose}>
+              Cancel
+            </button>
+            <button type="submit" class="button-primary">
+              Create {channelType() === 'category' ? 'Category' : 'Channel'}
+            </button>
           </div>
         </form>
       </div>

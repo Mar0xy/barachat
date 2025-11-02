@@ -14,7 +14,7 @@ export const CreateInviteModal: Component<CreateInviteModalProps> = (props) => {
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
-    
+
     const token = localStorage.getItem('token');
     try {
       const response = await fetch(`${API_URL}/servers/${props.serverId}/invites`, {
@@ -48,7 +48,9 @@ export const CreateInviteModal: Component<CreateInviteModalProps> = (props) => {
       <div class="modal" onClick={(e) => e.stopPropagation()}>
         <div class="modal-header">
           <h2>Create Invite</h2>
-          <button class="modal-close" onClick={props.onClose}>×</button>
+          <button class="modal-close" onClick={props.onClose}>
+            ×
+          </button>
         </div>
         <form onSubmit={handleSubmit}>
           <div class="modal-body">
@@ -74,8 +76,12 @@ export const CreateInviteModal: Component<CreateInviteModalProps> = (props) => {
             {error() && <div class="error-message">{error()}</div>}
           </div>
           <div class="modal-footer">
-            <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
-            <button type="submit" class="button-primary">Create Invite</button>
+            <button type="button" class="button-secondary" onClick={props.onClose}>
+              Cancel
+            </button>
+            <button type="submit" class="button-primary">
+              Create Invite
+            </button>
           </div>
         </form>
       </div>

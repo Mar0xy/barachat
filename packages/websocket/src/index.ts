@@ -33,11 +33,11 @@ export function broadcastToUser(userId: string, event: any) {
 
 export async function broadcastToServer(serverId: string, event: any, excludeUserId?: string) {
   const message = JSON.stringify(event);
-  
+
   // Get all members of the server
   const members = await db.members.find({ '_id.server': serverId }).toArray();
-  const memberUserIds = members.map(m => m._id.user);
-  
+  const memberUserIds = members.map((m) => m._id.user);
+
   // Broadcast to all clients for server members
   for (const client of clients.values()) {
     if (
@@ -52,7 +52,7 @@ export async function broadcastToServer(serverId: string, event: any, excludeUse
 
 export async function broadcastToUsers(userIds: string[], event: any) {
   const message = JSON.stringify(event);
-  
+
   // Broadcast to all clients for the specified users
   for (const client of clients.values()) {
     if (userIds.includes(client.userId) && client.ws.readyState === WebSocket.OPEN) {
@@ -63,14 +63,14 @@ export async function broadcastToUsers(userIds: string[], event: any) {
 
 export async function broadcastToChannel(channelId: string, event: any, excludeUserId?: string) {
   const message = JSON.stringify(event);
-  
+
   // Get channel to find recipients
   const channel = await db.channels.findOne({ _id: channelId });
   if (!channel) return;
-  
+
   // Determine who should receive this message
   let recipientIds: string[] = [];
-  
+
   if (channel.channelType === 'DirectMessage') {
     // For DMs, send to all recipients
     recipientIds = channel.recipients || [];
@@ -79,10 +79,10 @@ export async function broadcastToChannel(channelId: string, event: any, excludeU
     const serverId = channel.server;
     if (serverId) {
       const members = await db.members.find({ '_id.server': serverId }).toArray();
-      recipientIds = members.map(m => m._id.user);
+      recipientIds = members.map((m) => m._id.user);
     }
   }
-  
+
   // Broadcast to all clients for users who should receive this
   for (const client of clients.values()) {
     if (
@@ -104,61 +104,73 @@ async function handleConnection(ws: WebSocket) {
 
       if (message.type === 'Authenticate') {
         const { token } = message;
-        
+
         try {
           const decoded = jwt.verify(token, config.jwtSecret) as { userId: string };
           const sessionId = Math.random().toString(36).substring(7);
-          
+
           client = {
             ws,
             userId: decoded.userId,
             sessionId
           };
-          
+
           clients.set(sessionId, client);
-          
+
           // Store session in Redis
           await db.setSession(decoded.userId, sessionId);
           await db.setPresence(decoded.userId, true);
 
           // Send authenticated event
-          ws.send(JSON.stringify({
-            type: EventType.Authenticated
-          }));
+          ws.send(
+            JSON.stringify({
+              type: EventType.Authenticated
+            })
+          );
 
           // Fetch user data
           const user = await db.users.findOne({ _id: decoded.userId });
-          const channels = await db.channels.find({
-            $or: [
-              { recipients: decoded.userId },
-              { _id: { $in: await getServerChannels(decoded.userId) } }
-            ]
-          }).toArray();
+          const channels = await db.channels
+            .find({
+              $or: [
+                { recipients: decoded.userId },
+                { _id: { $in: await getServerChannels(decoded.userId) } }
+              ]
+            })
+            .toArray();
 
-          const servers = await db.servers.find({
-            _id: { $in: await getUserServers(decoded.userId) }
-          }).toArray();
+          const servers = await db.servers
+            .find({
+              _id: { $in: await getUserServers(decoded.userId) }
+            })
+            .toArray();
 
-          const members = await db.members.find({
-            '_id.user': decoded.userId
-          }).toArray();
+          const members = await db.members
+            .find({
+              '_id.user': decoded.userId
+            })
+            .toArray();
 
           // Send ready event
-          ws.send(JSON.stringify({
-            type: EventType.Ready,
-            users: [user],
-            servers,
-            channels,
-            members
-          }));
+          ws.send(
+            JSON.stringify({
+              type: EventType.Ready,
+              users: [user],
+              servers,
+              channels,
+              members
+            })
+          );
 
           // Broadcast presence
-          broadcast({
-            type: EventType.UserPresence,
-            id: decoded.userId,
-            online: true
-          }, sessionId);
-
+          broadcast(
+            {
+              type: EventType.UserPresence,
+              id: decoded.userId,
+              online: true
+            },
+            sessionId
+          );
         } catch (error) {
           ws.send(JSON.stringify({ type: 'Error', error: 'Invalid token' }));
           ws.close();
@@ -168,20 +180,26 @@ async function handleConnection(ws: WebSocket) {
       } else if (message.type === 'BeginTyping' || message.type === 'Typing') {
         if (client) {
           const user = await db.users.findOne({ _id: client.userId });
-          broadcast({
-            type: 'Typing',
-            channel: message.channel,
-            username: user?.displayName || user?.username
-          }, client.sessionId);
+          broadcast(
+            {
+              type: 'Typing',
+              channel: message.channel,
+              username: user?.displayName || user?.username
+            },
+            client.sessionId
+          );
         }
       } else if (message.type === 'EndTyping' || message.type === 'StopTyping') {
         if (client) {
           const user = await db.users.findOne({ _id: client.userId });
-          broadcast({
-            type: 'StopTyping',
-            channel: message.channel,
-            username: user?.displayName || user?.username
-          }, client.sessionId);
+          broadcast(
+            {
+              type: 'StopTyping',
+              channel: message.channel,
+              username: user?.displayName || user?.username
+            },
+            client.sessionId
+          );
         }
       }
     } catch (error) {
@@ -193,12 +211,12 @@ async function handleConnection(ws: WebSocket) {
     if (client) {
       clients.delete(client.sessionId);
       await db.removeSession(client.userId, client.sessionId);
-      
+
       // Check if user has other sessions
       const sessions = await db.getSessions(client.userId);
       if (sessions.length === 0) {
         await db.setPresence(client.userId, false);
-        
+
         // Broadcast offline status
         broadcast({
           type: EventType.UserPresence,
@@ -212,20 +230,20 @@ async function handleConnection(ws: WebSocket) {
 
 async function getUserServers(userId: string): Promise<string[]> {
   const members = await db.members.find({ '_id.user': userId }).toArray();
-  return members.map(m => m._id.server);
+  return members.map((m) => m._id.server);
 }
 
 async function getServerChannels(userId: string): Promise<string[]> {
   const serverIds = await getUserServers(userId);
   const servers = await db.servers.find({ _id: { $in: serverIds } }).toArray();
-  return servers.flatMap(s => s.channels);
+  return servers.flatMap((s) => s.channels);
 }
 
 async function start() {
   try {
     await db.connect();
 
-    const wss = new WebSocketServer({ 
+    const wss = new WebSocketServer({
       port: config.server.wsPort,
       host: config.server.host
     });
@@ -238,10 +256,14 @@ async function start() {
         // Handle different event types
         if (event.type === EventType.Message && event.channelId) {
           // Broadcast message to channel recipients
-          await broadcastToChannel(event.channelId, {
-            type: event.type,
-            message: event.message
-          }, event.excludeUserId);
+          await broadcastToChannel(
+            event.channelId,
+            {
+              type: event.type,
+              message: event.message
+            },
+            event.excludeUserId
+          );
         } else if (event.type === EventType.MessageDelete && event.channelId) {
           // Broadcast message deletion to channel recipients
           await broadcastToChannel(event.channelId, {

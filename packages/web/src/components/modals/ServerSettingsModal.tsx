@@ -26,13 +26,13 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
   // Load invites
   const loadInvites = async () => {
     if (!props.server) return;
-    
+
     const token = localStorage.getItem('token');
     try {
       const response = await fetch(`${API_URL}/servers/${props.server._id}/invites`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setInvites(data);
@@ -49,7 +49,7 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
   // Create invite
   const createInvite = async () => {
     if (!props.server) return;
-    
+
     setCreatingInvite(true);
     const token = localStorage.getItem('token');
     try {
@@ -61,10 +61,10 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
         },
         body: JSON.stringify({
           maxUses: inviteMaxUses(),
-          expiresIn: 604800  // 7 days
+          expiresIn: 604800 // 7 days
         })
       });
-      
+
       if (response.ok) {
         await loadInvites();
         setShowInviteOptions(false);
@@ -80,16 +80,16 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
   // Delete invite
   const deleteInvite = async (inviteId: string) => {
     if (!props.server) return;
-    
+
     const token = localStorage.getItem('token');
     try {
       const response = await fetch(`${API_URL}/servers/${props.server._id}/invites/${inviteId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
-        setInvites(invites().filter(i => i._id !== inviteId));
+        setInvites(invites().filter((i) => i._id !== inviteId));
       }
     } catch (error) {
       console.error('Error deleting invite:', error);
@@ -99,21 +99,21 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
   // Leave server
   const handleLeaveServer = async () => {
     if (!props.server) return;
-    
+
     const isOwner = props.server.owner === props.currentUserId;
     const confirmMessage = isOwner
       ? 'You are the owner of this server. Leaving will DELETE the server permanently. Are you sure?'
       : 'Are you sure you want to leave this server?';
-    
+
     if (!confirm(confirmMessage)) return;
-    
+
     const token = localStorage.getItem('token');
     try {
       const response = await fetch(`${API_URL}/servers/${props.server._id}/leave`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
         props.onLeave?.();
         props.onClose();
@@ -130,14 +130,14 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
 
     const file = input.files[0];
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       const result = e.target?.result;
       if (typeof result === 'string') {
         setCropImageUrl(result);
       }
     };
-    
+
     reader.readAsDataURL(file);
   };
 
@@ -178,7 +178,7 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
 
     setSaving(true);
     const token = localStorage.getItem('token');
-    
+
     try {
       const response = await fetch(`${API_URL}/servers/${props.server._id}`, {
         method: 'PATCH',
@@ -210,27 +210,32 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
       <div class="modal" onClick={(e) => e.stopPropagation()}>
         <div class="modal-header">
           <h2>Server Settings</h2>
-          <button class="modal-close" onClick={props.onClose}>×</button>
+          <button class="modal-close" onClick={props.onClose}>
+            ×
+          </button>
         </div>
         <form onSubmit={handleSave}>
           <div class="modal-body">
-            <Show when={props.isOwner} fallback={
-              <div class="settings-section">
-                <h3>Overview</h3>
-                <p>Only the server owner can modify server settings.</p>
-                <label>
-                  Server ID
-                  <input type="text" value={props.server?._id || ''} disabled />
-                </label>
-              </div>
-            }>
+            <Show
+              when={props.isOwner}
+              fallback={
+                <div class="settings-section">
+                  <h3>Overview</h3>
+                  <p>Only the server owner can modify server settings.</p>
+                  <label>
+                    Server ID
+                    <input type="text" value={props.server?._id || ''} disabled />
+                  </label>
+                </div>
+              }
+            >
               <div class="settings-section">
                 <h3>Overview</h3>
                 <label>
                   Server Name
-                  <input 
-                    type="text" 
-                    value={name()} 
+                  <input
+                    type="text"
+                    value={name()}
                     onInput={(e) => setName(e.currentTarget.value)}
                     placeholder="Server Name"
                   />
@@ -279,8 +284,8 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
             <Show when={props.isOwner}>
               <div class="settings-section">
                 <h3>Invites</h3>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   class="button-secondary"
                   onClick={() => {
                     const newShowState = !showInvites();
@@ -292,19 +297,19 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
                 >
                   {showInvites() ? 'Hide Invites' : 'Show Invites'}
                 </button>
-                
+
                 <Show when={showInvites()}>
                   <div class="invites-list">
                     <Show when={!showInviteOptions()}>
-                      <button 
-                        type="button" 
-                        class="button-primary" 
+                      <button
+                        type="button"
+                        class="button-primary"
                         onClick={() => setShowInviteOptions(true)}
                       >
                         Create Invite
                       </button>
                     </Show>
-                    
+
                     <Show when={showInviteOptions()}>
                       <div class="invite-create-form">
                         <label>
@@ -318,16 +323,16 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
                           />
                         </label>
                         <div class="invite-form-actions">
-                          <button 
-                            type="button" 
-                            class="button-primary" 
+                          <button
+                            type="button"
+                            class="button-primary"
                             onClick={createInvite}
                             disabled={creatingInvite()}
                           >
                             {creatingInvite() ? 'Creating...' : 'Create'}
                           </button>
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             class="button-secondary"
                             onClick={() => {
                               setShowInviteOptions(false);
@@ -339,7 +344,7 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
                         </div>
                       </div>
                     </Show>
-                    
+
                     <For each={invites()}>
                       {(invite) => (
                         <div class="invite-item">
@@ -354,7 +359,7 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
                               )}
                             </span>
                           </div>
-                          <button 
+                          <button
                             type="button"
                             class="button-danger-small"
                             onClick={() => deleteInvite(invite._id)}
@@ -364,7 +369,7 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
                         </div>
                       )}
                     </For>
-                    
+
                     <Show when={invites().length === 0 && !showInviteOptions()}>
                       <p class="no-invites">No active invites. Create one to invite users!</p>
                     </Show>
@@ -375,11 +380,7 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
 
             <div class="settings-section danger-zone">
               <h3>Danger Zone</h3>
-              <button 
-                type="button" 
-                class="button-danger"
-                onClick={handleLeaveServer}
-              >
+              <button type="button" class="button-danger" onClick={handleLeaveServer}>
                 Leave Server
               </button>
               <p class="danger-text">

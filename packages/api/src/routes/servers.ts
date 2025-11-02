@@ -10,14 +10,18 @@ export const serversRouter: ExpressRouter = Router();
 serversRouter.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
     // Find all servers where user is a member
-    const members = await db.members.find({
-      '_id.user': req.userId
-    }).toArray();
-    
-    const serverIds = members.map(m => m._id.server);
-    const servers = await db.servers.find({
-      _id: { $in: serverIds }
-    }).toArray();
+    const members = await db.members
+      .find({
+        '_id.user': req.userId
+      })
+      .toArray();
+
+    const serverIds = members.map((m) => m._id.server);
+    const servers = await db.servers
+      .find({
+        _id: { $in: serverIds }
+      })
+      .toArray();
 
     res.json(servers);
   } catch (error) {
@@ -83,7 +87,7 @@ serversRouter.post('/create', authenticate, async (req: AuthRequest, res) => {
 serversRouter.get('/:serverId', authenticate, async (req: AuthRequest, res) => {
   try {
     const server = await db.servers.findOne({ _id: req.params.serverId });
-    
+
     if (!server) {
       return res.status(404).json({ error: 'Server not found' });
     }
@@ -103,7 +107,7 @@ serversRouter.patch('/:serverId', authenticate, async (req: AuthRequest, res) =>
 
     // Check if user is server owner
     const server = await db.servers.findOne({ _id: serverId });
-    
+
     if (!server) {
       return res.status(404).json({ error: 'Server not found' });
     }
@@ -117,20 +121,17 @@ serversRouter.patch('/:serverId', authenticate, async (req: AuthRequest, res) =>
     if (description !== undefined) update.description = description;
     if (icon !== undefined) update.icon = icon;
 
-    await db.servers.updateOne(
-      { _id: serverId },
-      { $set: update }
-    );
+    await db.servers.updateOne({ _id: serverId }, { $set: update });
 
     const updatedServer = await db.servers.findOne({ _id: serverId });
-    
+
     // Broadcast server update via Redis
     await db.publishEvent({
       type: EventType.ServerUpdate,
       id: serverId,
       data: update
     });
-    
+
     res.json(updatedServer);
   } catch (error) {
     console.error('Error updating server:', error);
@@ -150,7 +151,7 @@ serversRouter.post('/:serverId/channels', authenticate, async (req: AuthRequest,
 
     // Check if user is server owner
     const server = await db.servers.findOne({ _id: serverId });
-    
+
     if (!server) {
       return res.status(404).json({ error: 'Server not found' });
     }
@@ -173,10 +174,7 @@ serversRouter.post('/:serverId/channels', authenticate, async (req: AuthRequest,
     await db.channels.insertOne(channel as any);
 
     // Add channel to server's channel list
-    await db.servers.updateOne(
-      { _id: serverId },
-      { $push: { channels: channelId } as any }
-    );
+    await db.servers.updateOne({ _id: serverId }, { $push: { channels: channelId } as any });
 
     // Broadcast channel creation to server members via Redis
     await db.publishEvent({
@@ -231,20 +229,22 @@ serversRouter.get('/:serverId/members', authenticate, async (req: AuthRequest, r
     }
 
     // Get all members of the server
-    const members = await db.members.find({
-      '_id.server': serverId
-    }).toArray();
+    const members = await db.members
+      .find({
+        '_id.server': serverId
+      })
+      .toArray();
 
     // Fetch user details for each member
-    const userIds = members.map(m => m._id.user);
+    const userIds = members.map((m) => m._id.user);
     const users = await db.users.find({ _id: { $in: userIds } }).toArray();
 
     // Get presence status for each user
     const membersWithPresence = await Promise.all(
       members.map(async (member) => {
-        const userInfo = users.find(u => u._id === member._id.user);
+        const userInfo = users.find((u) => u._id === member._id.user);
         const online = await db.getPresence(member._id.user);
-        
+
         return {
           ...member,
           user: userInfo,
@@ -283,7 +283,7 @@ serversRouter.post('/:serverId/invites', authenticate, async (req: AuthRequest, 
 
     const inviteId = ulid();
     const now = new Date();
-    
+
     const invite = {
       _id: inviteId,
       server: serverId,
@@ -328,27 +328,31 @@ serversRouter.get('/:serverId/invites', authenticate, async (req: AuthRequest, r
 });
 
 // Delete server invite
-serversRouter.delete('/:serverId/invites/:inviteId', authenticate, async (req: AuthRequest, res) => {
-  try {
-    const { serverId, inviteId } = req.params;
+serversRouter.delete(
+  '/:serverId/invites/:inviteId',
+  authenticate,
+  async (req: AuthRequest, res) => {
+    try {
+      const { serverId, inviteId } = req.params;
 
-    // Check if user is server member
-    const member = await db.members.findOne({
-      '_id.server': serverId,
-      '_id.user': req.userId
-    });
+      // Check if user is server member
+      const member = await db.members.findOne({
+        '_id.server': serverId,
+        '_id.user': req.userId
+      });
 
-    if (!member) {
-      return res.status(403).json({ error: 'Forbidden: Not a server member' });
+      if (!member) {
+        return res.status(403).json({ error: 'Forbidden: Not a server member' });
+      }
+
+      await db.invites.deleteOne({ _id: inviteId, server: serverId });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting invite:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    await db.invites.deleteOne({ _id: inviteId, server: serverId });
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting invite:', error);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+);
 
 // Join server via invite
 serversRouter.post('/join/:inviteCode', authenticate, async (req: AuthRequest, res) => {
@@ -356,8 +360,8 @@ serversRouter.post('/join/:inviteCode', authenticate, async (req: AuthRequest, r
     const { inviteCode } = req.params;
 
     // Find invite
-    const invite = await db.invites.findOne({ _id: inviteCode }) as any;
-    
+    const invite = (await db.invites.findOne({ _id: inviteCode })) as any;
+
     if (!invite) {
       return res.status(404).json({ error: 'Invite not found' });
     }
@@ -396,13 +400,10 @@ serversRouter.post('/join/:inviteCode', authenticate, async (req: AuthRequest, r
     await db.members.insertOne(member as any);
 
     // Increment invite uses
-    await db.invites.updateOne(
-      { _id: inviteCode },
-      { $inc: { uses: 1 } as any }
-    );
-    
+    await db.invites.updateOne({ _id: inviteCode }, { $inc: { uses: 1 } as any });
+
     // Check if invite has reached max uses and delete if so
-    const updatedInvite = await db.invites.findOne({ _id: inviteCode }) as any;
+    const updatedInvite = (await db.invites.findOne({ _id: inviteCode })) as any;
     if (updatedInvite && updatedInvite.maxUses > 0 && updatedInvite.uses >= updatedInvite.maxUses) {
       await db.invites.deleteOne({ _id: inviteCode });
     }
@@ -430,7 +431,7 @@ serversRouter.post('/:serverId/leave', authenticate, async (req: AuthRequest, re
     const { serverId } = req.params;
 
     const server = await db.servers.findOne({ _id: serverId });
-    
+
     if (!server) {
       return res.status(404).json({ error: 'Server not found' });
     }
@@ -438,23 +439,23 @@ serversRouter.post('/:serverId/leave', authenticate, async (req: AuthRequest, re
     // Check if user is the owner
     if (server.owner === req.userId) {
       // Delete the entire server if owner leaves
-      
+
       // Get all channels first (before deleting them)
       const channels = await db.channels.find({ server: serverId }).toArray();
-      const channelIds = channels.map(c => c._id);
-      
+      const channelIds = channels.map((c) => c._id);
+
       // Delete all messages in those channels
       await db.messages.deleteMany({ channel: { $in: channelIds } });
-      
+
       // Delete all channels
       await db.channels.deleteMany({ server: serverId });
-      
+
       // Delete all members
       await db.members.deleteMany({ '_id.server': serverId } as any);
-      
+
       // Delete all invites
       await db.invites.deleteMany({ server: serverId });
-      
+
       // Delete server
       await db.servers.deleteOne({ _id: serverId });
 
@@ -488,82 +489,86 @@ serversRouter.post('/:serverId/leave', authenticate, async (req: AuthRequest, re
 });
 
 // Delete category and optionally its channels
-serversRouter.delete('/:serverId/categories/:categoryId', authenticate, async (req: AuthRequest, res) => {
-  try {
-    const { serverId, categoryId } = req.params;
-    const { deleteChannels } = req.query; // ?deleteChannels=true to delete channels too
+serversRouter.delete(
+  '/:serverId/categories/:categoryId',
+  authenticate,
+  async (req: AuthRequest, res) => {
+    try {
+      const { serverId, categoryId } = req.params;
+      const { deleteChannels } = req.query; // ?deleteChannels=true to delete channels too
 
-    // Check if user is server owner
-    const server = await db.servers.findOne({ _id: serverId });
-    
-    if (!server) {
-      return res.status(404).json({ error: 'Server not found' });
-    }
+      // Check if user is server owner
+      const server = await db.servers.findOne({ _id: serverId });
 
-    if (server.owner !== req.userId) {
-      return res.status(403).json({ error: 'Forbidden: Only server owner can delete categories' });
-    }
-
-    // Find channels in this category
-    const channelsInCategory = await db.channels.find({ 
-      server: serverId,
-      category: categoryId 
-    }).toArray();
-
-    if (deleteChannels === 'true') {
-      // Delete all channels in the category
-      for (const channel of channelsInCategory) {
-        await db.channels.deleteOne({ _id: channel._id });
-        await db.messages.deleteMany({ channel: channel._id });
-        
-        // Broadcast channel deletion
-        await db.publishEvent({
-          type: EventType.ChannelDelete,
-          id: channel._id,
-          serverId: serverId
-        });
+      if (!server) {
+        return res.status(404).json({ error: 'Server not found' });
       }
-    } else {
-      // Just remove the category reference from channels
-      await db.channels.updateMany(
-        { server: serverId, category: categoryId },
-        { $unset: { category: '' } } as any
-      );
 
-      // Broadcast channel updates
-      for (const channel of channelsInCategory) {
-        await db.publishEvent({
-          type: EventType.ChannelUpdate,
-          id: channel._id,
-          data: { category: null },
-          clear: ['category'],
-          serverId: serverId
-        });
+      if (server.owner !== req.userId) {
+        return res
+          .status(403)
+          .json({ error: 'Forbidden: Only server owner can delete categories' });
       }
+
+      // Find channels in this category
+      const channelsInCategory = await db.channels
+        .find({
+          server: serverId,
+          category: categoryId
+        })
+        .toArray();
+
+      if (deleteChannels === 'true') {
+        // Delete all channels in the category
+        for (const channel of channelsInCategory) {
+          await db.channels.deleteOne({ _id: channel._id });
+          await db.messages.deleteMany({ channel: channel._id });
+
+          // Broadcast channel deletion
+          await db.publishEvent({
+            type: EventType.ChannelDelete,
+            id: channel._id,
+            serverId: serverId
+          });
+        }
+      } else {
+        // Just remove the category reference from channels
+        await db.channels.updateMany({ server: serverId, category: categoryId }, {
+          $unset: { category: '' }
+        } as any);
+
+        // Broadcast channel updates
+        for (const channel of channelsInCategory) {
+          await db.publishEvent({
+            type: EventType.ChannelUpdate,
+            id: channel._id,
+            data: { category: null },
+            clear: ['category'],
+            serverId: serverId
+          });
+        }
+      }
+
+      // Delete the category channel itself
+      await db.channels.deleteOne({ _id: categoryId });
+
+      // Remove category from server
+      if (server.categories) {
+        const updatedCategories = server.categories.filter((c) => c.id !== categoryId);
+        await db.servers.updateOne({ _id: serverId }, { $set: { categories: updatedCategories } });
+      }
+
+      // Broadcast category deletion
+      await db.publishEvent({
+        type: EventType.ChannelDelete,
+        id: categoryId,
+        serverId: serverId
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    // Delete the category channel itself
-    await db.channels.deleteOne({ _id: categoryId });
-
-    // Remove category from server
-    if (server.categories) {
-      const updatedCategories = server.categories.filter(c => c.id !== categoryId);
-      await db.servers.updateOne(
-        { _id: serverId },
-        { $set: { categories: updatedCategories } }
-      );
-    }
-
-    // Broadcast category deletion
-    await db.publishEvent({
-      type: EventType.ChannelDelete,
-      id: categoryId,
-      serverId: serverId
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting category:', error);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+);

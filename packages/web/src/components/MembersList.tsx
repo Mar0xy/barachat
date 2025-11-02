@@ -7,14 +7,18 @@ interface MembersListProps {
 }
 
 export const MembersList: Component<MembersListProps> = (props) => {
-  const onlineMembers = () => props.members.filter(m => m.online);
-  const offlineMembers = () => props.members.filter(m => !m.online);
+  const onlineMembers = () => props.members.filter((m) => m.online);
+  const offlineMembers = () => props.members.filter((m) => !m.online);
 
   const getPresenceClass = (member: Member) => {
-    if (!member.online || !member.user?.status?.presence || member.user.status.presence === 'Invisible') {
+    if (
+      !member.online ||
+      !member.user?.status?.presence ||
+      member.user.status.presence === 'Invisible'
+    ) {
       return 'offline';
     }
-    
+
     switch (member.user.status.presence) {
       case 'Online':
         return 'online';
@@ -34,13 +38,14 @@ export const MembersList: Component<MembersListProps> = (props) => {
           <h4>Online — {onlineMembers().length}</h4>
           <For each={onlineMembers()}>
             {(member) => (
-              <div 
-                class="member-item" 
-                onClick={() => props.onMemberClick?.(member.user._id)}
-              >
+              <div class="member-item" onClick={() => props.onMemberClick?.(member.user._id)}>
                 <div class="member-avatar-wrapper">
                   {member.user.avatar ? (
-                    <img src={member.user.avatar} alt={member.user.username} class="member-avatar" />
+                    <img
+                      src={member.user.avatar}
+                      alt={member.user.username}
+                      class="member-avatar"
+                    />
                   ) : (
                     <div class="member-avatar member-avatar-placeholder">
                       {member.user.username[0].toUpperCase()}
@@ -62,13 +67,17 @@ export const MembersList: Component<MembersListProps> = (props) => {
           <h4>Offline — {offlineMembers().length}</h4>
           <For each={offlineMembers()}>
             {(member) => (
-              <div 
-                class="member-item offline-member" 
+              <div
+                class="member-item offline-member"
                 onClick={() => props.onMemberClick?.(member.user._id)}
               >
                 <div class="member-avatar-wrapper">
                   {member.user.avatar ? (
-                    <img src={member.user.avatar} alt={member.user.username} class="member-avatar" />
+                    <img
+                      src={member.user.avatar}
+                      alt={member.user.username}
+                      class="member-avatar"
+                    />
                   ) : (
                     <div class="member-avatar member-avatar-placeholder">
                       {member.user.username[0].toUpperCase()}

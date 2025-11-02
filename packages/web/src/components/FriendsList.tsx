@@ -22,13 +22,13 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
 
     setSearching(true);
     const token = localStorage.getItem('token');
-    
+
     try {
       // Search for users by username
       const response = await fetch(`${API_URL}/users/search?q=${encodeURIComponent(query)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
         const results = await response.json();
         setSearchResults(results);
@@ -42,13 +42,13 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
 
   const sendFriendRequest = async (userId: string) => {
     const token = localStorage.getItem('token');
-    
+
     try {
       const response = await fetch(`${API_URL}/users/@me/relationships/${userId}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
         alert('Friend request sent!');
         setShowAddFriend(false);
@@ -63,7 +63,7 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
 
   const acceptFriendRequest = async (userId: string) => {
     const token = localStorage.getItem('token');
-    
+
     try {
       const response = await fetch(`${API_URL}/users/@me/relationships/${userId}`, {
         method: 'PUT',
@@ -73,7 +73,7 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
         },
         body: JSON.stringify({ action: 'accept' })
       });
-      
+
       if (response.ok) {
         props.onRefresh();
       }
@@ -84,7 +84,7 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
 
   const rejectFriendRequest = async (userId: string) => {
     const token = localStorage.getItem('token');
-    
+
     try {
       const response = await fetch(`${API_URL}/users/@me/relationships/${userId}`, {
         method: 'PUT',
@@ -94,7 +94,7 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
         },
         body: JSON.stringify({ action: 'reject' })
       });
-      
+
       if (response.ok) {
         props.onRefresh();
       }
@@ -105,13 +105,13 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
 
   const removeFriend = async (userId: string) => {
     const token = localStorage.getItem('token');
-    
+
     try {
       const response = await fetch(`${API_URL}/users/@me/relationships/${userId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
         props.onRefresh();
       }
@@ -136,8 +136,8 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
     return presence;
   };
 
-  const pendingRequests = () => props.friends.filter(f => f.relationshipStatus === 'Incoming');
-  const acceptedFriends = () => props.friends.filter(f => f.relationshipStatus === 'Friend');
+  const pendingRequests = () => props.friends.filter((f) => f.relationshipStatus === 'Incoming');
+  const acceptedFriends = () => props.friends.filter((f) => f.relationshipStatus === 'Friend');
 
   return (
     <div class="friends-list">
@@ -158,15 +158,11 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
                   {friend.avatar ? (
                     <img src={friend.avatar} alt={friend.username} />
                   ) : (
-                    <div class="avatar-placeholder">
-                      {friend.username[0].toUpperCase()}
-                    </div>
+                    <div class="avatar-placeholder">{friend.username[0].toUpperCase()}</div>
                   )}
                 </div>
                 <div class="friend-info">
-                  <div class="friend-name">
-                    {friend.displayName || friend.username}
-                  </div>
+                  <div class="friend-name">{friend.displayName || friend.username}</div>
                   <div class="friend-username">
                     {friend.username}#{friend.discriminator}
                   </div>
@@ -194,27 +190,24 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
                 {friend.avatar ? (
                   <img src={friend.avatar} alt={friend.username} />
                 ) : (
-                  <div class="avatar-placeholder">
-                    {friend.username[0].toUpperCase()}
-                  </div>
+                  <div class="avatar-placeholder">{friend.username[0].toUpperCase()}</div>
                 )}
-                <div class="status-indicator" classList={{ 
-                  online: getPresenceClass(friend) === 'online',
-                  idle: getPresenceClass(friend) === 'idle',
-                  dnd: getPresenceClass(friend) === 'dnd'
-                }} />
+                <div
+                  class="status-indicator"
+                  classList={{
+                    online: getPresenceClass(friend) === 'online',
+                    idle: getPresenceClass(friend) === 'idle',
+                    dnd: getPresenceClass(friend) === 'dnd'
+                  }}
+                />
               </div>
               <div class="friend-info">
-                <div class="friend-name">
-                  {friend.displayName || friend.username}
-                </div>
-                <div class="friend-username">
-                  {getPresenceText(friend)}
-                </div>
+                <div class="friend-name">{friend.displayName || friend.username}</div>
+                <div class="friend-username">{getPresenceText(friend)}</div>
               </div>
               <div class="friend-actions">
-                <button 
-                  class="icon-button" 
+                <button
+                  class="icon-button"
                   title="Message"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -225,12 +218,16 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
                 >
                   💬
                 </button>
-                <button class="icon-button" onClick={(e) => {
-                  e.stopPropagation();
-                  if (confirm('Remove friend?')) {
-                    removeFriend(friend._id);
-                  }
-                }} title="Remove Friend">
+                <button
+                  class="icon-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm('Remove friend?')) {
+                      removeFriend(friend._id);
+                    }
+                  }}
+                  title="Remove Friend"
+                >
                   ❌
                 </button>
               </div>
@@ -244,7 +241,9 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
           <div class="modal" onClick={(e) => e.stopPropagation()}>
             <div class="modal-header">
               <h2>Add Friend</h2>
-              <button class="modal-close" onClick={() => setShowAddFriend(false)}>×</button>
+              <button class="modal-close" onClick={() => setShowAddFriend(false)}>
+                ×
+              </button>
             </div>
             <div class="modal-body">
               <label>
@@ -278,15 +277,11 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
                           {user.avatar ? (
                             <img src={user.avatar} alt={user.username} />
                           ) : (
-                            <div class="avatar-placeholder">
-                              {user.username[0].toUpperCase()}
-                            </div>
+                            <div class="avatar-placeholder">{user.username[0].toUpperCase()}</div>
                           )}
                         </div>
                         <div class="friend-info">
-                          <div class="friend-name">
-                            {user.displayName || user.username}
-                          </div>
+                          <div class="friend-name">{user.displayName || user.username}</div>
                           <div class="friend-username">
                             {user.username}#{user.discriminator}
                           </div>

@@ -10,7 +10,7 @@ export const channelsRouter: ExpressRouter = Router();
 channelsRouter.get('/:channelId', authenticate, async (req: AuthRequest, res) => {
   try {
     const channel = await db.channels.findOne({ _id: req.params.channelId });
-    
+
     if (!channel) {
       return res.status(404).json({ error: 'Channel not found' });
     }
@@ -28,15 +28,15 @@ channelsRouter.patch('/:channelId', authenticate, async (req: AuthRequest, res) 
     const { channelId } = req.params;
     const { name, description, category } = req.body;
 
-    const channel = await db.channels.findOne({ _id: channelId }) as any;
-    
+    const channel = (await db.channels.findOne({ _id: channelId })) as any;
+
     if (!channel) {
       return res.status(404).json({ error: 'Channel not found' });
     }
 
     // Check if user has permission (server owner or admin)
     if (channel.server) {
-      const server = await db.servers.findOne({ _id: channel.server }) as any;
+      const server = (await db.servers.findOne({ _id: channel.server })) as any;
       if (!server || server.owner !== req.userId) {
         return res.status(403).json({ error: 'Forbidden: Insufficient permissions' });
       }
@@ -47,13 +47,10 @@ channelsRouter.patch('/:channelId', authenticate, async (req: AuthRequest, res) 
     if (description !== undefined) update.description = description;
     if (category !== undefined) update.category = category;
 
-    await db.channels.updateOne(
-      { _id: channelId },
-      { $set: update }
-    );
+    await db.channels.updateOne({ _id: channelId }, { $set: update });
 
     const updatedChannel = await db.channels.findOne({ _id: channelId });
-    
+
     // Broadcast channel update via Redis
     await db.publishEvent({
       type: EventType.ChannelUpdate,
@@ -61,7 +58,7 @@ channelsRouter.patch('/:channelId', authenticate, async (req: AuthRequest, res) 
       data: update,
       serverId: channel.server
     });
-    
+
     res.json(updatedChannel);
   } catch (error) {
     console.error('Error updating channel:', error);
@@ -74,15 +71,15 @@ channelsRouter.delete('/:channelId', authenticate, async (req: AuthRequest, res)
   try {
     const { channelId } = req.params;
 
-    const channel = await db.channels.findOne({ _id: channelId }) as any;
-    
+    const channel = (await db.channels.findOne({ _id: channelId })) as any;
+
     if (!channel) {
       return res.status(404).json({ error: 'Channel not found' });
     }
 
     // Check if user has permission (server owner or admin)
     if (channel.server) {
-      const server = await db.servers.findOne({ _id: channel.server }) as any;
+      const server = (await db.servers.findOne({ _id: channel.server })) as any;
       if (!server || server.owner !== req.userId) {
         return res.status(403).json({ error: 'Forbidden: Insufficient permissions' });
       }
@@ -132,14 +129,14 @@ channelsRouter.post('/create-dm', authenticate, async (req: AuthRequest, res) =>
     };
 
     await db.channels.insertOne(channel as any);
-    
+
     // Broadcast channel creation to both users via Redis
     await db.publishEvent({
       type: EventType.ChannelCreate,
       channel: channel,
       recipientIds: [req.userId!, userId]
     });
-    
+
     res.json(channel);
   } catch (error) {
     console.error('Error creating DM:', error);
@@ -150,10 +147,12 @@ channelsRouter.post('/create-dm', authenticate, async (req: AuthRequest, res) =>
 // Get DM channels for current user
 channelsRouter.get('/dms/list', authenticate, async (req: AuthRequest, res) => {
   try {
-    const dmChannels = await db.channels.find({
-      channelType: ChannelType.DirectMessage,
-      recipients: req.userId
-    }).toArray();
+    const dmChannels = await db.channels
+      .find({
+        channelType: ChannelType.DirectMessage,
+        recipients: req.userId
+      })
+      .toArray();
 
     // Populate recipient user data
     const channelsWithUsers = await Promise.all(
