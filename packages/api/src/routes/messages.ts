@@ -47,9 +47,9 @@ messagesRouter.post('/:channelId/messages', authenticate, async (req: AuthReques
       } : { _id: req.userId!, username: 'Unknown', discriminator: '0000' }
     };
 
-    // Broadcast message to all connected clients in the channel
+    // Broadcast message to all other connected clients in the channel (sender gets it from API response)
     broadcastToChannel(channelId, {
-      type: 'Message',
+      type: EventType.Message,
       message: messageWithAuthor
     }, req.userId!);
 
@@ -124,9 +124,9 @@ messagesRouter.delete('/:channelId/messages/:messageId', authenticate, async (re
 
     // Broadcast message deletion
     broadcastToChannel(channelId, {
-      type: 'MessageDeleted',
-      messageId,
-      channelId
+      type: EventType.MessageDelete,
+      id: messageId,
+      channel: channelId
     });
 
     res.json({ success: true });
