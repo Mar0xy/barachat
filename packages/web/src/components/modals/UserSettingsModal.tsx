@@ -7,6 +7,7 @@ interface UserSettingsModalProps {
   user: User | null;
   onClose: () => void;
   onUpdate: (user: User) => void;
+  onLogout?: () => void;
 }
 
 export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
@@ -103,117 +104,124 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
   };
 
   return (
-    <div class="modal-overlay" onClick={props.onClose}>
-      <div class="modal" onClick={(e) => e.stopPropagation()}>
-        <div class="modal-header">
-          <h2>User Settings</h2>
-          <button class="modal-close" onClick={props.onClose}>×</button>
+    <div class="settings-overlay" onClick={props.onClose}>
+      <div class="settings-modal" onClick={(e) => e.stopPropagation()}>
+        <div class="settings-sidebar">
+          <div class="settings-sidebar-header">User Settings</div>
+          <div class="settings-nav">
+            <div class="settings-nav-item active">My Account</div>
+          </div>
+          <div class="settings-logout" onClick={() => props.onLogout?.()}>
+            Log Out
+          </div>
         </div>
-        <form onSubmit={handleSave}>
-          <div class="modal-body">
-            <div class="settings-section">
-              <h3>My Account</h3>
-              <label>
-                Username
-                <input type="text" value={props.user?.username || ''} disabled />
-              </label>
-              <label>
-                Discriminator
-                <input type="text" value={`#${props.user?.discriminator || '0000'}`} disabled />
-              </label>
-              <label>
-                Display Name
-                <input
-                  type="text"
-                  value={displayName()}
-                  onInput={(e) => setDisplayName(e.currentTarget.value)}
-                  placeholder="Enter a display name"
-                />
-              </label>
-              <label>
-                Bio
-                <textarea
-                  value={bio()}
-                  onInput={(e) => setBio(e.currentTarget.value)}
-                  placeholder="Tell us about yourself..."
-                  rows={3}
-                  maxLength={190}
-                />
-              </label>
-            </div>
+        
+        <div class="settings-content">
+          <button class="settings-close" onClick={props.onClose}>×</button>
+          
+          <form onSubmit={handleSave}>
+            <div class="settings-content-inner">
+              <h2 class="settings-title">My Account</h2>
+              
+              <div class="settings-section">
+                <label>
+                  Username
+                  <input type="text" value={props.user?.username || ''} disabled />
+                </label>
+                <label>
+                  Discriminator
+                  <input type="text" value={`#${props.user?.discriminator || '0000'}`} disabled />
+                </label>
+                <label>
+                  Display Name
+                  <input
+                    type="text"
+                    value={displayName()}
+                    onInput={(e) => setDisplayName(e.currentTarget.value)}
+                    placeholder="Enter a display name"
+                  />
+                </label>
+                <label>
+                  Bio
+                  <textarea
+                    value={bio()}
+                    onInput={(e) => setBio(e.currentTarget.value)}
+                    placeholder="Tell us about yourself..."
+                    rows={3}
+                    maxLength={190}
+                  />
+                </label>
+              </div>
 
-            <div class="settings-section">
-              <h3>Status</h3>
-              <label>
-                Presence
-                <select
-                  value={presence()}
-                  onChange={(e) => setPresence(e.currentTarget.value as any)}
-                  style={{ 
-                    width: '100%', 
-                    padding: '10px', 
-                    'margin-top': '8px',
-                    background: '#2a2a2a',
-                    border: '1px solid #2a2a2a',
-                    'border-radius': '4px',
-                    color: '#fff',
-                    'font-size': '15px'
-                  }}
-                >
-                  <option value="Online">🟢 Online</option>
-                  <option value="Idle">🟡 Idle</option>
-                  <option value="Busy">🔴 Do Not Disturb</option>
-                  <option value="Invisible">⚫ Invisible</option>
-                </select>
-              </label>
-              <label>
-                Custom Status
-                <input
-                  type="text"
-                  value={statusText()}
-                  onInput={(e) => setStatusText(e.currentTarget.value)}
-                  placeholder="What's happening?"
-                  maxLength={128}
-                />
-              </label>
-            </div>
+              <div class="settings-divider" />
 
-            <div class="settings-section">
-              <h3>Avatar</h3>
-              <label>
-                Upload Avatar
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  disabled={uploading()}
-                />
-                {uploading() && <p class="upload-status">Uploading...</p>}
-              </label>
-              <label>
-                Avatar URL (or upload above)
-                <input
-                  type="text"
-                  value={avatar()}
-                  onInput={(e) => setAvatar(e.currentTarget.value)}
-                  placeholder="Enter avatar image URL (e.g., https://...)"
-                />
-              </label>
-              <Show when={avatar()}>
-                <div class="avatar-preview">
-                  <p>Avatar Preview:</p>
-                  <img src={avatar()} alt="Avatar preview" class="preview-image" />
-                </div>
-              </Show>
+              <h3 class="settings-subtitle">Status</h3>
+              <div class="settings-section">
+                <label>
+                  Presence
+                  <select
+                    value={presence()}
+                    onChange={(e) => setPresence(e.currentTarget.value as any)}
+                  >
+                    <option value="Online">🟢 Online</option>
+                    <option value="Idle">🟡 Idle</option>
+                    <option value="Busy">🔴 Do Not Disturb</option>
+                    <option value="Invisible">⚫ Invisible</option>
+                  </select>
+                </label>
+                <label>
+                  Custom Status
+                  <input
+                    type="text"
+                    value={statusText()}
+                    onInput={(e) => setStatusText(e.currentTarget.value)}
+                    placeholder="What's happening?"
+                    maxLength={128}
+                  />
+                </label>
+              </div>
+
+              <div class="settings-divider" />
+
+              <h3 class="settings-subtitle">Avatar</h3>
+              <div class="settings-section">
+                <label>
+                  Upload Avatar
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    disabled={uploading()}
+                  />
+                  {uploading() && <p class="upload-status">Uploading...</p>}
+                </label>
+                <label>
+                  Avatar URL (or upload above)
+                  <input
+                    type="text"
+                    value={avatar()}
+                    onInput={(e) => setAvatar(e.currentTarget.value)}
+                    placeholder="Enter avatar image URL (e.g., https://...)"
+                  />
+                </label>
+                <Show when={avatar()}>
+                  <div class="avatar-preview">
+                    <p>Avatar Preview:</p>
+                    <img src={avatar()} alt="Avatar preview" class="preview-image" />
+                  </div>
+                </Show>
+              </div>
+
+              <div class="settings-actions">
+                <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
+                <button type="submit" class="button-primary" disabled={saving()}>
+                  {saving() ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
-            <button type="submit" class="button-primary" disabled={saving()}>
-              {saving() ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
+        
         <Show when={cropImageUrl()}>
           <ImageCropper
             imageUrl={cropImageUrl()!}

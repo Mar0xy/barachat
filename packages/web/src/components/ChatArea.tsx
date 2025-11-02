@@ -20,6 +20,9 @@ interface ChatAreaProps {
   uploadingAttachment: boolean;
   onAttachmentUpload: (files: FileList | null) => void;
   fileInputRef?: HTMLInputElement;
+  messagePlaceholder?: string;
+  onUserClick?: (userId: string) => void;
+  isServerOwner?: boolean;
 }
 
 export const ChatArea: Component<ChatAreaProps> = (props) => {
@@ -54,7 +57,12 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
           <For each={props.messages}>
             {(message) => (
               <div class="message" classList={{ 'own-message': message.author._id === props.user?._id }}>
-                <div class="message-avatar">
+                <div 
+                  class="message-avatar"
+                  classList={{ 'clickable': !!props.onUserClick }}
+                  onClick={() => props.onUserClick?.(message.author._id)}
+                  style={{ cursor: props.onUserClick ? 'pointer' : 'default' }}
+                >
                   {message.author.avatar ? (
                     <img src={message.author.avatar} alt={message.author.username} />
                   ) : (
@@ -65,13 +73,18 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
                 </div>
                 <div class="message-content">
                   <div class="message-header">
-                    <span class="message-author">
+                    <span 
+                      class="message-author"
+                      classList={{ 'clickable': !!props.onUserClick }}
+                      onClick={() => props.onUserClick?.(message.author._id)}
+                      style={{ cursor: props.onUserClick ? 'pointer' : 'default' }}
+                    >
                       {message.author.displayName || message.author.username}
                     </span>
                     <span class="message-timestamp">
                       {formatTimestamp(message.createdAt || new Date().toISOString())}
                     </span>
-                    <Show when={message.author._id === props.user?._id}>
+                    <Show when={message.author._id === props.user?._id || props.isServerOwner}>
                       <button
                         class="delete-message"
                         onClick={() => props.onDeleteMessage(message._id)}
@@ -150,7 +163,7 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
           </button>
           <textarea
             class="message-input"
-            placeholder="Message #general"
+            placeholder={props.messagePlaceholder || "Message #general"}
             value={props.messageInput}
             onInput={(e) => props.onMessageInputChange(e.currentTarget.value)}
             onKeyDown={handleKeyDown}

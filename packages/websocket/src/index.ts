@@ -293,6 +293,31 @@ async function start() {
             id: event.id,
             data: event.data
           });
+        } else if (event.type === EventType.ServerDelete && event.id) {
+          // Broadcast server deletion to server members
+          await broadcastToServer(event.id, {
+            type: event.type,
+            id: event.id
+          });
+        } else if (event.type === EventType.ServerMemberJoin && event.serverId) {
+          // Broadcast member join to server members
+          await broadcastToServer(event.serverId, {
+            type: event.type,
+            serverId: event.serverId,
+            userId: event.userId
+          });
+        } else if (event.type === EventType.ServerMemberLeave && event.serverId) {
+          // Broadcast member leave to server members
+          await broadcastToServer(event.serverId, {
+            type: event.type,
+            serverId: event.serverId,
+            userId: event.userId
+          });
+        } else if (event.type === EventType.UserRelationship && event.userId) {
+          // Broadcast relationship update to specific user
+          broadcastToUser(event.userId, {
+            type: event.type
+          });
         } else {
           // For other event types, broadcast as-is
           broadcast(event);

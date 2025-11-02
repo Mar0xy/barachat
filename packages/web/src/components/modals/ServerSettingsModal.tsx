@@ -1,12 +1,15 @@
-import { Component, createSignal, Show } from 'solid-js';
+import { Component, createSignal, Show, For } from 'solid-js';
 import { Server } from '../../types';
 import { API_URL } from '../../utils/constants';
 import { ImageCropper } from '../../ImageCropper';
 
 interface ServerSettingsModalProps {
   server: Server | undefined;
+  isOwner?: boolean;
+  currentUserId?: string;
   onClose: () => void;
   onUpdate: (server: Server) => void;
+  onLeave?: () => void;
 }
 
 export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) => {
@@ -16,6 +19,110 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
   const [saving, setSaving] = createSignal(false);
   const [uploading, setUploading] = createSignal(false);
   const [cropImageUrl, setCropImageUrl] = createSignal<string | null>(null);
+  const [invites, setInvites] = createSignal<any[]>([]);
+  const [showInvites, setShowInvites] = createSignal(false);
+  const [creatingInvite, setCreatingInvite] = createSignal(false);
+
+  // Load invites
+  const loadInvites = async () => {
+    if (!props.server) return;
+    
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/${props.server._id}/invites`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setInvites(data);
+      }
+    } catch (error) {
+      console.error('Error loading invites:', error);
+    }
+  };
+
+  // Create invite with custom max uses
+  const [inviteMaxUses, setInviteMaxUses] = createSignal(0);
+  const [showInviteOptions, setShowInviteOptions] = createSignal(false);
+
+  // Create invite
+  const createInvite = async () => {
+    if (!props.server) return;
+    
+    setCreatingInvite(true);
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/${props.server._id}/invites`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          maxUses: inviteMaxUses(),
+          expiresIn: 604800  // 7 days
+        })
+      });
+      
+      if (response.ok) {
+        await loadInvites();
+        setShowInviteOptions(false);
+        setInviteMaxUses(0);
+      }
+    } catch (error) {
+      console.error('Error creating invite:', error);
+    } finally {
+      setCreatingInvite(false);
+    }
+  };
+
+  // Delete invite
+  const deleteInvite = async (inviteId: string) => {
+    if (!props.server) return;
+    
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/${props.server._id}/invites/${inviteId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        setInvites(invites().filter(i => i._id !== inviteId));
+      }
+    } catch (error) {
+      console.error('Error deleting invite:', error);
+    }
+  };
+
+  // Leave server
+  const handleLeaveServer = async () => {
+    if (!props.server) return;
+    
+    const isOwner = props.server.owner === props.currentUserId;
+    const confirmMessage = isOwner
+      ? 'You are the owner of this server. Leaving will DELETE the server permanently. Are you sure?'
+      : 'Are you sure you want to leave this server?';
+    
+    if (!confirm(confirmMessage)) return;
+    
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/${props.server._id}/leave`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        props.onLeave?.();
+        props.onClose();
+      }
+    } catch (error) {
+      console.error('Error leaving server:', error);
+      alert('Failed to leave server');
+    }
+  };
 
   const handleFileSelect = (e: Event) => {
     const input = e.target as HTMLInputElement;
@@ -107,62 +214,190 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
         </div>
         <form onSubmit={handleSave}>
           <div class="modal-body">
-            <div class="settings-section">
-              <h3>Overview</h3>
-              <label>
-                Server Name
-                <input 
-                  type="text" 
-                  value={name()} 
-                  onInput={(e) => setName(e.currentTarget.value)}
-                  placeholder="Server Name"
-                />
-              </label>
-              <label>
-                Description
-                <textarea
-                  value={description()}
-                  onInput={(e) => setDescription(e.currentTarget.value)}
-                  placeholder="Server description"
-                  rows={3}
-                />
-              </label>
-              <label>
-                Server Icon
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  disabled={uploading()}
-                />
-                {uploading() && <p class="upload-status">Uploading...</p>}
-              </label>
-              <label>
-                Server Icon URL (or upload above)
-                <input
-                  type="text"
-                  value={icon()}
-                  onInput={(e) => setIcon(e.currentTarget.value)}
-                  placeholder="Enter icon image URL (e.g., https://...)"
-                />
-              </label>
-              <Show when={icon()}>
-                <div class="avatar-preview">
-                  <p>Icon Preview:</p>
-                  <img src={icon()} alt="Server icon preview" class="preview-image" />
-                </div>
-              </Show>
-              <label>
-                Server ID
-                <input type="text" value={props.server?._id || ''} disabled />
-              </label>
+            <Show when={props.isOwner} fallback={
+              <div class="settings-section">
+                <h3>Overview</h3>
+                <p>Only the server owner can modify server settings.</p>
+                <label>
+                  Server ID
+                  <input type="text" value={props.server?._id || ''} disabled />
+                </label>
+              </div>
+            }>
+              <div class="settings-section">
+                <h3>Overview</h3>
+                <label>
+                  Server Name
+                  <input 
+                    type="text" 
+                    value={name()} 
+                    onInput={(e) => setName(e.currentTarget.value)}
+                    placeholder="Server Name"
+                  />
+                </label>
+                <label>
+                  Description
+                  <textarea
+                    value={description()}
+                    onInput={(e) => setDescription(e.currentTarget.value)}
+                    placeholder="Server description"
+                    rows={3}
+                  />
+                </label>
+                <label>
+                  Server Icon
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    disabled={uploading()}
+                  />
+                  {uploading() && <p class="upload-status">Uploading...</p>}
+                </label>
+                <label>
+                  Server Icon URL (or upload above)
+                  <input
+                    type="text"
+                    value={icon()}
+                    onInput={(e) => setIcon(e.currentTarget.value)}
+                    placeholder="Enter icon image URL (e.g., https://...)"
+                  />
+                </label>
+                <Show when={icon()}>
+                  <div class="avatar-preview">
+                    <p>Icon Preview:</p>
+                    <img src={icon()} alt="Server icon preview" class="preview-image" />
+                  </div>
+                </Show>
+                <label>
+                  Server ID
+                  <input type="text" value={props.server?._id || ''} disabled />
+                </label>
+              </div>
+            </Show>
+
+            <Show when={props.isOwner}>
+              <div class="settings-section">
+                <h3>Invites</h3>
+                <button 
+                  type="button" 
+                  class="button-secondary"
+                  onClick={() => {
+                    const newShowState = !showInvites();
+                    setShowInvites(newShowState);
+                    if (newShowState) {
+                      loadInvites();
+                    }
+                  }}
+                >
+                  {showInvites() ? 'Hide Invites' : 'Show Invites'}
+                </button>
+                
+                <Show when={showInvites()}>
+                  <div class="invites-list">
+                    <Show when={!showInviteOptions()}>
+                      <button 
+                        type="button" 
+                        class="button-primary" 
+                        onClick={() => setShowInviteOptions(true)}
+                      >
+                        Create Invite
+                      </button>
+                    </Show>
+                    
+                    <Show when={showInviteOptions()}>
+                      <div class="invite-create-form">
+                        <label>
+                          Max Uses (0 = unlimited)
+                          <input
+                            type="number"
+                            min="0"
+                            value={inviteMaxUses()}
+                            onInput={(e) => setInviteMaxUses(parseInt(e.currentTarget.value) || 0)}
+                            placeholder="0"
+                          />
+                        </label>
+                        <div class="invite-form-actions">
+                          <button 
+                            type="button" 
+                            class="button-primary" 
+                            onClick={createInvite}
+                            disabled={creatingInvite()}
+                          >
+                            {creatingInvite() ? 'Creating...' : 'Create'}
+                          </button>
+                          <button 
+                            type="button" 
+                            class="button-secondary"
+                            onClick={() => {
+                              setShowInviteOptions(false);
+                              setInviteMaxUses(0);
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </Show>
+                    
+                    <For each={invites()}>
+                      {(invite) => (
+                        <div class="invite-item">
+                          <div class="invite-info">
+                            <code class="invite-code">{invite._id}</code>
+                            <span class="invite-meta">
+                              Uses: {invite.uses}/{invite.maxUses || '∞'}
+                              {invite.expiresAt && (
+                                <span class="invite-expires">
+                                  {' • Expires: ' + new Date(invite.expiresAt).toLocaleDateString()}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <button 
+                            type="button"
+                            class="button-danger-small"
+                            onClick={() => deleteInvite(invite._id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </For>
+                    
+                    <Show when={invites().length === 0 && !showInviteOptions()}>
+                      <p class="no-invites">No active invites. Create one to invite users!</p>
+                    </Show>
+                  </div>
+                </Show>
+              </div>
+            </Show>
+
+            <div class="settings-section danger-zone">
+              <h3>Danger Zone</h3>
+              <button 
+                type="button" 
+                class="button-danger"
+                onClick={handleLeaveServer}
+              >
+                Leave Server
+              </button>
+              <p class="danger-text">
+                {props.server?.owner === props.currentUserId
+                  ? 'Warning: Leaving will permanently delete this server!'
+                  : 'You will no longer have access to this server.'}
+              </p>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
-            <button type="submit" class="button-primary" disabled={saving()}>
-              {saving() ? 'Saving...' : 'Save Changes'}
+            <button type="button" class="button-secondary" onClick={props.onClose}>
+              {props.isOwner ? 'Cancel' : 'Close'}
             </button>
+            <Show when={props.isOwner}>
+              <button type="submit" class="button-primary" disabled={saving()}>
+                {saving() ? 'Saving...' : 'Save Changes'}
+              </button>
+            </Show>
           </div>
         </form>
         <Show when={cropImageUrl()}>

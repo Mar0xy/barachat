@@ -1,7 +1,7 @@
 import { MongoClient, Db, Collection } from 'mongodb';
 import { createClient, RedisClientType } from 'redis';
 import { config } from '@barachat/config';
-import type { User, Server, Channel, Message, Member, Emoji } from '@barachat/models';
+import type { User, Server, Channel, Message, Member, Emoji, Invite } from '@barachat/models';
 import type { 
   WebSocketEvent, 
   MessageEvent, 
@@ -78,6 +78,10 @@ export class Database {
 
   public get emojis(): Collection<Emoji> {
     return this.db.collection<Emoji>('emojis');
+  }
+
+  public get invites(): Collection<Invite> {
+    return this.db.collection<Invite>('invites');
   }
 
   // Redis operations

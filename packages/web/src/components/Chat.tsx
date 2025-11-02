@@ -1,6 +1,6 @@
-import { Component, createSignal, Show, onMount, createEffect } from 'solid-js';
+import { Component, createSignal, Show, onMount, createEffect, createMemo } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { CreateServerModal } from './modals/CreateServerModal';
+import { AddServerModal } from './modals/AddServerModal';
 import { UserSettingsModal } from './modals/UserSettingsModal';
 import { ServerSettingsModal } from './modals/ServerSettingsModal';
 import { CreateChannelModal } from './modals/CreateChannelModal';
@@ -303,6 +303,23 @@ export const Chat: Component = () => {
     }
   };
 
+  // Join server (via invite)
+  const joinServer = async (server: Server) => {
+    // Normalize server name
+    const normalizedServer = {
+      ...server,
+      name: typeof server.name === 'string' ? server.name : String(server.name || 'Unnamed Server')
+    };
+    
+    // Check if server already exists in the list
+    if (!servers().some(s => s._id === server._id)) {
+      setServers([...servers(), normalizedServer]);
+    }
+    
+    setShowCreateServer(false);
+    setCurrentServer(server._id);
+  };
+
   // Create channel
   const createChannel = (channel: Channel) => {
     setChannels([...channels(), channel]);
@@ -332,11 +349,23 @@ export const Chat: Component = () => {
     }
   };
 
-  // Delete channel
-  const deleteChannel = async (channelId: string) => {
+  // Delete channel or category
+  const deleteChannel = async (channelId: string, deleteChannels?: boolean) => {
     const token = localStorage.getItem('token');
+    const channel = channels().find(c => c._id === channelId);
+    
     try {
-      const response = await fetch(`${API_URL}/channels/${channelId}`, {
+      let url = `${API_URL}/channels/${channelId}`;
+      
+      // If deleting a category, use the category deletion endpoint
+      if (channel?.channelType === 'Category' && currentServer()) {
+        url = `${API_URL}/servers/${currentServer()}/categories/${channelId}`;
+        if (deleteChannels !== undefined) {
+          url += `?deleteChannels=${deleteChannels}`;
+        }
+      }
+      
+      const response = await fetch(url, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -592,6 +621,50 @@ export const Chat: Component = () => {
           newMap.set(data.channel, channelTypers);
           setTypingUsers(newMap);
         }
+      } else if (data.type === 'ServerDelete') {
+        // Remove server from list when deleted
+        setServers(servers().filter(s => s._id !== data.id));
+        
+        // If we're currently viewing the deleted server, switch to home
+        if (currentServer() === data.id) {
+          setCurrentServer('');
+          setCurrentChannel('');
+        }
+      } else if (data.type === 'ServerMemberJoin') {
+        // Reload members if we're viewing the server where someone joined
+        if (currentServer() === data.serverId) {
+          loadMembers(data.serverId);
+        }
+      } else if (data.type === 'ServerMemberLeave') {
+        // Reload members if we're viewing the server where someone left
+        if (currentServer() === data.serverId) {
+          loadMembers(data.serverId);
+        }
+      } else if (data.type === 'ChannelCreate') {
+        // Add new channel to the list if it's for the current server
+        if (data.channel && data.channel.server === currentServer()) {
+          // Check if channel already exists to prevent duplicates
+          if (!channels().some(c => c._id === data.channel._id)) {
+            setChannels([...channels(), data.channel]);
+          }
+        }
+      } else if (data.type === 'ChannelUpdate') {
+        // Update channel in the list
+        setChannels(channels().map(c => 
+          c._id === data.id ? { ...c, ...data.data } : c
+        ));
+      } else if (data.type === 'ChannelDelete') {
+        // Remove channel from list
+        setChannels(channels().filter(c => c._id !== data.id));
+        
+        // If we're currently viewing the deleted channel, clear it
+        if (currentChannel() === data.id) {
+          setCurrentChannel('');
+        }
+      } else if (data.type === 'UserRelationship') {
+        // Reload friends and DM channels when relationships change
+        loadFriends();
+        loadDMChannels();
       }
     };
 
@@ -632,7 +705,49 @@ export const Chat: Component = () => {
     }
   };
 
-  const logout = () => {
+  // Check if current user is the server owner
+  const isCurrentServerOwner = createMemo(() => {
+    const serverId = currentServer();
+    if (!serverId) return false;
+    
+    const server = servers().find(s => s._id === serverId);
+    return server?.owner === user()?._id;
+  });
+
+  // Calculate message placeholder based on current channel
+  const messagePlaceholder = createMemo(() => {
+    const channel = currentChannel();
+    if (!channel) return 'Message';
+    
+    // Check if it's a DM channel
+    const dmChannel = dmChannels().find(dm => dm._id === channel);
+    if (dmChannel && dmChannel.recipient) {
+      const recipientName = dmChannel.recipient.displayName || dmChannel.recipient.username;
+      return `Message ${recipientName}`;
+    }
+    
+    // Check if it's a server channel
+    const serverChannel = channels().find(c => c._id === channel);
+    if (serverChannel && serverChannel.name) {
+      return `Message #${serverChannel.name}`;
+    }
+    
+    return 'Message #general';
+  });
+
+  const logout = async () => {
+    const token = localStorage.getItem('token');
+    
+    // Call logout endpoint to set presence to offline
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+    
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/');
@@ -655,6 +770,7 @@ export const Chat: Component = () => {
           currentChannel={currentChannel()}
           currentServer={currentServer()}
           serverName={servers().find(s => s._id === currentServer())?.name}
+          isServerOwner={isCurrentServerOwner()}
           onChannelSelect={handleChannelSelect}
           onCreateChannel={() => setShowCreateChannel(true)}
           onServerSettings={() => setShowServerSettings(true)}
@@ -664,7 +780,6 @@ export const Chat: Component = () => {
         <UserPanel
           user={user()}
           onSettingsClick={() => setShowUserSettings(true)}
-          onLogout={logout}
         />
       </div>
       
@@ -689,6 +804,9 @@ export const Chat: Component = () => {
             uploadingAttachment={uploadingAttachment()}
             onAttachmentUpload={handleAttachmentUpload}
             fileInputRef={fileInputRef}
+            messagePlaceholder={messagePlaceholder()}
+            onUserClick={loadUserProfile}
+            isServerOwner={isCurrentServerOwner()}
           />
           <Show when={currentServer()}>
             <MembersList
@@ -707,9 +825,10 @@ export const Chat: Component = () => {
       </Show>
       
       <Show when={showCreateServer()}>
-        <CreateServerModal
+        <AddServerModal
           onClose={() => setShowCreateServer(false)}
           onCreate={createServer}
+          onJoin={joinServer}
         />
       </Show>
       
@@ -718,12 +837,15 @@ export const Chat: Component = () => {
           user={user()}
           onClose={() => setShowUserSettings(false)}
           onUpdate={updateUserProfile}
+          onLogout={logout}
         />
       </Show>
       
       <Show when={showServerSettings() && currentServer()}>
         <ServerSettingsModal
           server={servers().find(s => s._id === currentServer())}
+          isOwner={isCurrentServerOwner()}
+          currentUserId={user()?._id}
           onClose={() => setShowServerSettings(false)}
           onUpdate={(updatedServer) => {
             // Normalize server name
@@ -732,6 +854,12 @@ export const Chat: Component = () => {
               name: typeof updatedServer.name === 'string' ? updatedServer.name : String(updatedServer.name || 'Unnamed Server')
             };
             setServers(servers().map(s => s._id === normalizedServer._id ? normalizedServer : s));
+          }}
+          onLeave={() => {
+            // Remove server from list and switch to home
+            setServers(servers().filter(s => s._id !== currentServer()));
+            setCurrentServer('');
+            setCurrentChannel('');
           }}
         />
       </Show>

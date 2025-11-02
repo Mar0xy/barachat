@@ -172,6 +172,10 @@ export interface Invite {
   server: string;
   creator: string;
   channel: string;
+  maxUses?: number; // Maximum number of uses (0 = unlimited)
+  uses: number; // Current number of uses
+  expiresAt?: Date; // Expiration timestamp (undefined = never expires)
+  createdAt: Date;
 }
 
 export interface Member {
