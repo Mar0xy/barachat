@@ -487,14 +487,22 @@ export const Chat: Component = () => {
         onCreateServer={() => setShowCreateServer(true)}
       />
       
-      <ChannelList
-        channels={channels()}
-        currentChannel={currentChannel()}
-        currentServer={currentServer()}
-        onChannelSelect={handleChannelSelect}
-        onCreateChannel={() => setShowCreateChannel(true)}
-        onServerSettings={() => setShowServerSettings(true)}
-      />
+      <div class="sidebar">
+        <ChannelList
+          channels={channels()}
+          currentChannel={currentChannel()}
+          currentServer={currentServer()}
+          onChannelSelect={handleChannelSelect}
+          onCreateChannel={() => setShowCreateChannel(true)}
+          onServerSettings={() => setShowServerSettings(true)}
+        />
+        
+        <UserPanel
+          user={user()}
+          onSettingsClick={() => setShowUserSettings(true)}
+          onLogout={logout}
+        />
+      </div>
       
       <Show when={!currentServer()} fallback={
         <>
@@ -530,12 +538,6 @@ export const Chat: Component = () => {
           onRefresh={loadFriends}
         />
       </Show>
-      
-      <UserPanel
-        user={user()}
-        onSettingsClick={() => setShowUserSettings(true)}
-        onLogout={logout}
-      />
       
       <Show when={showCreateServer()}>
         <CreateServerModal
