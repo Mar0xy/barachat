@@ -165,7 +165,6 @@ docker compose up -d --build
 ```
 
 ### Rebuilding After Code Changes
-### Rebuilding After Code Changes
 
 When using local builds (with `build:` configuration uncommented):
 
