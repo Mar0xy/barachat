@@ -203,23 +203,23 @@ async function start() {
     wss.on('connection', handleConnection);
 
     // Subscribe to Redis events and broadcast to connected clients
-    await db.subscribeToEvents(async (event) => {
+    await db.subscribeToEvents(async (event: any) => {
       try {
         // Handle different event types
-        if (event.type === EventType.Message) {
+        if (event.type === EventType.Message && event.channelId) {
           // Broadcast message to channel recipients
           await broadcastToChannel(event.channelId, {
             type: event.type,
             message: event.message
           }, event.excludeUserId);
-        } else if (event.type === EventType.MessageDelete) {
+        } else if (event.type === EventType.MessageDelete && event.channelId) {
           // Broadcast message deletion to channel recipients
           await broadcastToChannel(event.channelId, {
             type: event.type,
             id: event.id,
             channel: event.channel
           });
-        } else if (event.type === EventType.UserUpdate) {
+        } else if (event.type === EventType.UserUpdate && event.id) {
           // Broadcast user update to all connected clients
           broadcast({
             type: event.type,

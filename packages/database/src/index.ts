@@ -2,6 +2,21 @@ import { MongoClient, Db, Collection } from 'mongodb';
 import { createClient, RedisClientType } from 'redis';
 import { config } from '@barachat/config';
 import type { User, Server, Channel, Message, Member, Emoji } from '@barachat/models';
+import type { 
+  WebSocketEvent, 
+  MessageEvent, 
+  MessageDeleteEvent, 
+  UserUpdateEvent,
+  ChannelCreateEvent,
+  ChannelUpdateEvent,
+  ChannelDeleteEvent,
+  ServerUpdateEvent,
+  ServerDeleteEvent
+} from '@barachat/models';
+
+// Type for events that can be published via Redis
+export type PublishableEvent = WebSocketEvent | MessageEvent | MessageDeleteEvent | UserUpdateEvent | 
+  ChannelCreateEvent | ChannelUpdateEvent | ChannelDeleteEvent | ServerUpdateEvent | ServerDeleteEvent;
 
 export class Database {
   private static instance: Database;
@@ -94,12 +109,12 @@ export class Database {
   }
 
   // Publish events for WebSocket server to broadcast
-  public async publishEvent(event: any): Promise<void> {
+  public async publishEvent(event: PublishableEvent | { type: string; [key: string]: any }): Promise<void> {
     await this.redisPublisher.publish('websocket:events', JSON.stringify(event));
   }
 
   // Subscribe to events (used by WebSocket server)
-  public async subscribeToEvents(callback: (event: any) => void): Promise<void> {
+  public async subscribeToEvents(callback: (event: PublishableEvent | { type: string; [key: string]: any }) => void): Promise<void> {
     // Create a duplicate connection for subscribing
     const subscriber = this.redisClient.duplicate();
     await subscriber.connect();
