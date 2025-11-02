@@ -2,16 +2,34 @@ import { MongoClient, Db, Collection } from 'mongodb';
 import { createClient, RedisClientType } from 'redis';
 import { config } from '@barachat/config';
 import type { User, Server, Channel, Message, Member, Emoji } from '@barachat/models';
+import type { 
+  WebSocketEvent, 
+  MessageEvent, 
+  MessageDeleteEvent, 
+  UserUpdateEvent,
+  ChannelCreateEvent,
+  ChannelUpdateEvent,
+  ChannelDeleteEvent,
+  ServerUpdateEvent,
+  ServerDeleteEvent
+} from '@barachat/models';
+
+// Type for events that can be published via Redis
+export type PublishableEvent = WebSocketEvent | MessageEvent | MessageDeleteEvent | UserUpdateEvent | 
+  ChannelCreateEvent | ChannelUpdateEvent | ChannelDeleteEvent | ServerUpdateEvent | ServerDeleteEvent;
 
 export class Database {
   private static instance: Database;
   private mongoClient: MongoClient;
   private redisClient: RedisClientType;
+  private redisPublisher: RedisClientType;
   private db!: Db;
 
   private constructor() {
     this.mongoClient = new MongoClient(config.database.mongodb);
     this.redisClient = createClient({ url: config.database.redis });
+    // Create a separate client for publishing (Redis best practice)
+    this.redisPublisher = createClient({ url: config.database.redis });
   }
 
   public static getInstance(): Database {
@@ -26,6 +44,7 @@ export class Database {
     this.db = this.mongoClient.db();
     
     await this.redisClient.connect();
+    await this.redisPublisher.connect();
     
     console.log('Connected to MongoDB and Redis');
   }
@@ -33,6 +52,7 @@ export class Database {
   public async disconnect(): Promise<void> {
     await this.mongoClient.close();
     await this.redisClient.quit();
+    await this.redisPublisher.quit();
   }
 
   // Collections
@@ -86,6 +106,27 @@ export class Database {
 
   public async getSessions(userId: string): Promise<string[]> {
     return await this.redisClient.sMembers(`sessions:${userId}`);
+  }
+
+  // Publish events for WebSocket server to broadcast
+  public async publishEvent(event: PublishableEvent | { type: string; [key: string]: any }): Promise<void> {
+    await this.redisPublisher.publish('websocket:events', JSON.stringify(event));
+  }
+
+  // Subscribe to events (used by WebSocket server)
+  public async subscribeToEvents(callback: (event: PublishableEvent | { type: string; [key: string]: any }) => void): Promise<void> {
+    // Create a duplicate connection for subscribing
+    const subscriber = this.redisClient.duplicate();
+    await subscriber.connect();
+    
+    await subscriber.subscribe('websocket:events', (message) => {
+      try {
+        const event = JSON.parse(message);
+        callback(event);
+      } catch (error) {
+        console.error('Error parsing event:', error);
+      }
+    });
   }
 }
 

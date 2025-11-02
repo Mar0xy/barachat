@@ -2,7 +2,7 @@ import { Router, type Router as ExpressRouter } from 'express';
 import { ulid } from 'ulid';
 import { db } from '@barachat/database';
 import { authenticate, AuthRequest } from '../middleware/auth';
-import { ChannelType } from '@barachat/models';
+import { ChannelType, EventType } from '@barachat/models';
 
 export const channelsRouter: ExpressRouter = Router();
 
@@ -53,6 +53,15 @@ channelsRouter.patch('/:channelId', authenticate, async (req: AuthRequest, res) 
     );
 
     const updatedChannel = await db.channels.findOne({ _id: channelId });
+    
+    // Broadcast channel update via Redis
+    await db.publishEvent({
+      type: EventType.ChannelUpdate,
+      id: channelId,
+      data: update,
+      serverId: channel.server
+    });
+    
     res.json(updatedChannel);
   } catch (error) {
     console.error('Error updating channel:', error);
@@ -85,6 +94,13 @@ channelsRouter.delete('/:channelId', authenticate, async (req: AuthRequest, res)
     // Also delete all messages in the channel
     await db.messages.deleteMany({ channel: channelId });
 
+    // Broadcast channel deletion via Redis
+    await db.publishEvent({
+      type: EventType.ChannelDelete,
+      id: channelId,
+      serverId: channel.server
+    });
+
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting channel:', error);
@@ -116,6 +132,14 @@ channelsRouter.post('/create-dm', authenticate, async (req: AuthRequest, res) =>
     };
 
     await db.channels.insertOne(channel as any);
+    
+    // Broadcast channel creation to both users via Redis
+    await db.publishEvent({
+      type: EventType.ChannelCreate,
+      channel: channel,
+      recipientIds: [req.userId!, userId]
+    });
+    
     res.json(channel);
   } catch (error) {
     console.error('Error creating DM:', error);

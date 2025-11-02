@@ -31,6 +31,36 @@ export function broadcastToUser(userId: string, event: any) {
   }
 }
 
+export async function broadcastToServer(serverId: string, event: any, excludeUserId?: string) {
+  const message = JSON.stringify(event);
+  
+  // Get all members of the server
+  const members = await db.members.find({ '_id.server': serverId }).toArray();
+  const memberUserIds = members.map(m => m._id.user);
+  
+  // Broadcast to all clients for server members
+  for (const client of clients.values()) {
+    if (
+      memberUserIds.includes(client.userId) &&
+      (!excludeUserId || client.userId !== excludeUserId) &&
+      client.ws.readyState === WebSocket.OPEN
+    ) {
+      client.ws.send(message);
+    }
+  }
+}
+
+export async function broadcastToUsers(userIds: string[], event: any) {
+  const message = JSON.stringify(event);
+  
+  // Broadcast to all clients for the specified users
+  for (const client of clients.values()) {
+    if (userIds.includes(client.userId) && client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(message);
+    }
+  }
+}
+
 export async function broadcastToChannel(channelId: string, event: any, excludeUserId?: string) {
   const message = JSON.stringify(event);
   
@@ -201,6 +231,76 @@ async function start() {
     });
 
     wss.on('connection', handleConnection);
+
+    // Subscribe to Redis events and broadcast to connected clients
+    await db.subscribeToEvents(async (event: any) => {
+      try {
+        // Handle different event types
+        if (event.type === EventType.Message && event.channelId) {
+          // Broadcast message to channel recipients
+          await broadcastToChannel(event.channelId, {
+            type: event.type,
+            message: event.message
+          }, event.excludeUserId);
+        } else if (event.type === EventType.MessageDelete && event.channelId) {
+          // Broadcast message deletion to channel recipients
+          await broadcastToChannel(event.channelId, {
+            type: event.type,
+            id: event.id,
+            channel: event.channel
+          });
+        } else if (event.type === EventType.UserUpdate && event.id) {
+          // Broadcast user update to relevant users (friends and server members)
+          // For now, broadcast to all as we need to query relationships
+          // TODO: Optimize to only send to friends and server members
+          broadcast({
+            type: event.type,
+            id: event.id,
+            data: event.data
+          });
+        } else if (event.type === EventType.ChannelCreate) {
+          // Broadcast channel creation
+          if (event.serverId) {
+            // Server channel - broadcast to server members
+            await broadcastToServer(event.serverId, {
+              type: event.type,
+              channel: event.channel
+            });
+          } else if (event.recipientIds) {
+            // DM channel - broadcast to recipients
+            await broadcastToUsers(event.recipientIds, {
+              type: event.type,
+              channel: event.channel
+            });
+          }
+        } else if (event.type === EventType.ChannelUpdate && event.serverId) {
+          // Broadcast channel update to server members
+          await broadcastToServer(event.serverId, {
+            type: event.type,
+            id: event.id,
+            data: event.data
+          });
+        } else if (event.type === EventType.ChannelDelete && event.serverId) {
+          // Broadcast channel deletion to server members
+          await broadcastToServer(event.serverId, {
+            type: event.type,
+            id: event.id
+          });
+        } else if (event.type === EventType.ServerUpdate && event.id) {
+          // Broadcast server update to server members
+          await broadcastToServer(event.id, {
+            type: event.type,
+            id: event.id,
+            data: event.data
+          });
+        } else {
+          // For other event types, broadcast as-is
+          broadcast(event);
+        }
+      } catch (error) {
+        console.error('Error handling Redis event:', error);
+      }
+    });
 
     console.log(`WebSocket server running on ws://${config.server.host}:${config.server.wsPort}`);
   } catch (error) {
