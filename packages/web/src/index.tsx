@@ -1,12 +1,13 @@
 import { render } from 'solid-js/web';
 import { Router, Route } from '@solidjs/router';
-import App from './App';
+import { Login, Chat } from './App';
 import './index.css';
 
 render(
   () => (
     <Router>
-      <Route path="/*" component={App} />
+      <Route path="/" component={Login} />
+      <Route path="/app" component={Chat} />
     </Router>
   ),
   document.getElementById('root')!

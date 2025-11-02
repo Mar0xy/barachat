@@ -1,5 +1,5 @@
 import { Component, createSignal, Show, onMount, For, createEffect } from 'solid-js';
-import { Route, useNavigate } from '@solidjs/router';
+import { useNavigate } from '@solidjs/router';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
@@ -24,7 +24,7 @@ interface Message {
   channel: string;
 }
 
-const Login: Component = () => {
+export const Login: Component = () => {
   const [isRegister, setIsRegister] = createSignal(false);
   const [email, setEmail] = createSignal('');
   const [username, setUsername] = createSignal('');
@@ -104,7 +104,7 @@ const Login: Component = () => {
   );
 };
 
-const Chat: Component = () => {
+export const Chat: Component = () => {
   const [user, setUser] = createSignal<User | null>(null);
   const [channels, setChannels] = createSignal<Channel[]>([]);
   const [currentChannel, setCurrentChannel] = createSignal<string>('');
@@ -253,14 +253,3 @@ const Chat: Component = () => {
     </div>
   );
 };
-
-const App: Component = () => {
-  return (
-    <>
-      <Route path="/" component={Login} />
-      <Route path="/app" component={Chat} />
-    </>
-  );
-};
-
-export default App;
