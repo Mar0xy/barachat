@@ -41,7 +41,7 @@ export async function broadcastToChannel(channelId: string, event: any, excludeU
   // Determine who should receive this message
   let recipientIds: string[] = [];
   
-  if (channel.channelType === 'DirectMessage' || channel.channelType === 'DM') {
+  if (channel.channelType === 'DirectMessage') {
     // For DMs, send to all recipients
     recipientIds = channel.recipients || [];
   } else {
