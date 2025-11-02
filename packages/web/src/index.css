@@ -880,7 +880,7 @@ body {
 
 .message {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   padding: 2px 8px;
   margin: 0 -8px;
 }
@@ -1014,6 +1014,8 @@ body {
   display: flex;
   align-items: center;
   padding: 0 4px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .message-input {
