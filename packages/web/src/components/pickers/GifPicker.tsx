@@ -1,4 +1,5 @@
 import { Component, createSignal, For, Show, onMount } from 'solid-js';
+import { TENOR_API_KEY, TENOR_CLIENT_KEY } from '../../utils/constants';
 
 interface GifPickerProps {
   onSelectGif: (gifUrl: string) => void;
@@ -18,9 +19,6 @@ interface TenorGif {
     };
   };
 }
-
-const TENOR_API_KEY = 'AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ'; // Public Tenor API key
-const TENOR_CLIENT_KEY = 'barachat';
 
 export const GifPicker: Component<GifPickerProps> = (props) => {
   const [searchQuery, setSearchQuery] = createSignal('');
@@ -135,7 +133,7 @@ export const GifPicker: Component<GifPickerProps> = (props) => {
               {(gif) => (
                 <div class="gif-item" onClick={() => handleGifClick(gif)}>
                   <img
-                    src={gif.media_formats.tinygif?.url || gif.media_formats.gif.url}
+                    src={gif.media_formats.tinygif?.url || gif.media_formats.gif?.url || ''}
                     alt="GIF"
                     loading="lazy"
                   />

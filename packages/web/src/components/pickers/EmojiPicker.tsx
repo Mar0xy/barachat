@@ -1,5 +1,4 @@
-import { Component, createSignal, For, Show, onMount } from 'solid-js';
-import twemoji from 'twemoji';
+import { Component, createSignal, For, Show } from 'solid-js';
 
 interface EmojiPickerProps {
   onSelectEmoji: (emoji: string) => void;
@@ -130,7 +129,8 @@ export const EmojiPicker: Component<EmojiPickerProps> = (props) => {
       return emojiCategories[selectedCategory()].emojis;
     }
     
-    // Simple search across all categories
+    // When searching, show all matching emojis from all categories
+    // For now, just show all emojis when searching (simple implementation)
     return emojiCategories
       .flatMap((cat) => cat.emojis)
       .filter((emoji, index, self) => self.indexOf(emoji) === index);
@@ -140,19 +140,6 @@ export const EmojiPicker: Component<EmojiPickerProps> = (props) => {
     props.onSelectEmoji(emoji);
     props.onClose();
   };
-
-  // Parse emojis to Twemoji images
-  const emojiRefs: HTMLDivElement[] = [];
-  onMount(() => {
-    emojiRefs.forEach((ref) => {
-      if (ref) {
-        twemoji.parse(ref, {
-          folder: 'svg',
-          ext: '.svg',
-        });
-      }
-    });
-  });
 
   return (
     <div class="emoji-picker-overlay" onClick={props.onClose}>
@@ -196,7 +183,6 @@ export const EmojiPicker: Component<EmojiPickerProps> = (props) => {
                 <button
                   class="emoji-item"
                   onClick={() => handleEmojiClick(emoji)}
-                  ref={(el) => emojiRefs.push(el)}
                 >
                   {emoji}
                 </button>
