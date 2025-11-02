@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { ulid } from 'ulid';
 import { db } from '@barachat/database';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { ChannelType } from '@barachat/models';
 
-export const channelsRouter = Router();
+export const channelsRouter: ExpressRouter = Router();
 
 // Get channel
 channelsRouter.get('/:channelId', authenticate, async (req: AuthRequest, res) => {

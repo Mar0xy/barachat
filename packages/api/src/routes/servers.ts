@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { ulid } from 'ulid';
 import { db } from '@barachat/database';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
-export const serversRouter = Router();
+export const serversRouter: ExpressRouter = Router();
 
 // Create server
 serversRouter.post('/create', authenticate, async (req: AuthRequest, res) => {

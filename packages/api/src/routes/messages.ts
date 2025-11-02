@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { ulid } from 'ulid';
 import { db } from '@barachat/database';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
-export const messagesRouter = Router();
+export const messagesRouter: ExpressRouter = Router();
 
 // Send message
 messagesRouter.post('/:channelId/messages', authenticate, async (req: AuthRequest, res) => {

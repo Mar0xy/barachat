@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { db } from '@barachat/database';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
-export const usersRouter = Router();
+export const usersRouter: ExpressRouter = Router();
 
 // Get current user
 usersRouter.get('/@me', authenticate, async (req: AuthRequest, res) => {

@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { ulid } from 'ulid';
 import { db } from '@barachat/database';
 import { config } from '@barachat/config';
 
-export const authRouter = Router();
+export const authRouter: ExpressRouter = Router();
 
 // Register
 authRouter.post('/register', async (req, res) => {

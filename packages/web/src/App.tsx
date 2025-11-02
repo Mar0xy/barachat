@@ -1,5 +1,5 @@
 import { Component, createSignal, Show, onMount, For, createEffect } from 'solid-js';
-import { Route, Routes, useNavigate } from '@solidjs/router';
+import { Route, useNavigate } from '@solidjs/router';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
@@ -256,10 +256,10 @@ const Chat: Component = () => {
 
 const App: Component = () => {
   return (
-    <Routes>
+    <>
       <Route path="/" component={Login} />
       <Route path="/app" component={Chat} />
-    </Routes>
+    </>
   );
 };
 
