@@ -389,6 +389,14 @@ body {
   background: #3ba55d;
 }
 
+.status-indicator.idle {
+  background: #faa61a;
+}
+
+.status-indicator.dnd {
+  background: #ed4245;
+}
+
 .friend-info {
   flex: 1;
   min-width: 0;
@@ -1220,6 +1228,46 @@ body {
 
 .lightbox-close:hover {
   color: #ed4245;
+}
+
+/* Context Menu */
+.context-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+.context-menu {
+  position: fixed;
+  background: #18191c;
+  border-radius: 4px;
+  padding: 6px 0;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
+  min-width: 180px;
+  z-index: 1000;
+}
+
+.context-menu-item {
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: #dcddde;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.context-menu-item:hover {
+  background: #5865f2;
+  color: #fff;
 }
 
 /* Typing Indicator */

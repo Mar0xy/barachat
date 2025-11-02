@@ -4,6 +4,7 @@ import { CreateServerModal } from './modals/CreateServerModal';
 import { UserSettingsModal } from './modals/UserSettingsModal';
 import { ServerSettingsModal } from './modals/ServerSettingsModal';
 import { CreateChannelModal } from './modals/CreateChannelModal';
+import { EditChannelModal } from './modals/EditChannelModal';
 import { UserProfileModal } from './modals/UserProfileModal';
 import { FriendsList } from './FriendsList';
 import { MembersList } from './MembersList';
@@ -27,6 +28,7 @@ export const Chat: Component = () => {
   const [showUserSettings, setShowUserSettings] = createSignal(false);
   const [showServerSettings, setShowServerSettings] = createSignal(false);
   const [showCreateChannel, setShowCreateChannel] = createSignal(false);
+  const [editingChannel, setEditingChannel] = createSignal<Channel | null>(null);
   const [typingUsers, setTypingUsers] = createSignal<Map<string, Set<string>>>(new Map());
   const [typingTimeout, setTypingTimeout] = createSignal<number | null>(null);
   const [lightboxImage, setLightboxImage] = createSignal<string | null>(null);
@@ -307,6 +309,50 @@ export const Chat: Component = () => {
     setShowCreateChannel(false);
   };
 
+  // Update channel
+  const updateChannel = async (channelId: string, name: string, category?: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/channels/${channelId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ name, category: category || null })
+      });
+
+      if (response.ok) {
+        const updatedChannel = await response.json();
+        setChannels(channels().map(c => c._id === channelId ? updatedChannel : c));
+        setEditingChannel(null);
+      }
+    } catch (error) {
+      console.error('Error updating channel:', error);
+    }
+  };
+
+  // Delete channel
+  const deleteChannel = async (channelId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/channels/${channelId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        setChannels(channels().filter(c => c._id !== channelId));
+        if (currentChannel() === channelId) {
+          setCurrentChannel('');
+        }
+        setEditingChannel(null);
+      }
+    } catch (error) {
+      console.error('Error deleting channel:', error);
+    }
+  };
+
   // Update user profile
   const updateUserProfile = async (updates: Partial<User>) => {
     const token = localStorage.getItem('token');
@@ -581,6 +627,7 @@ export const Chat: Component = () => {
           onChannelSelect={handleChannelSelect}
           onCreateChannel={() => setShowCreateChannel(true)}
           onServerSettings={() => setShowServerSettings(true)}
+          onEditChannel={(channel) => setEditingChannel(channel)}
         />
         
         <UserPanel
@@ -661,9 +708,19 @@ export const Chat: Component = () => {
       <Show when={showCreateChannel()}>
         <CreateChannelModal
           serverId={currentServer()}
-          categories={channels().filter(c => c.channelType === 'category')}
+          categories={channels().filter(c => c.channelType === 'Category')}
           onClose={() => setShowCreateChannel(false)}
           onCreate={createChannel}
+        />
+      </Show>
+      
+      <Show when={editingChannel()}>
+        <EditChannelModal
+          channel={editingChannel()!}
+          categories={channels().filter(c => c.channelType === 'Category')}
+          onClose={() => setEditingChannel(null)}
+          onUpdate={updateChannel}
+          onDelete={deleteChannel}
         />
       </Show>
       

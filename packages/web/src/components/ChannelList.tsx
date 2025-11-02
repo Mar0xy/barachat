@@ -1,4 +1,4 @@
-import { Component, For, Show, createMemo } from 'solid-js';
+import { Component, For, Show, createMemo, createSignal } from 'solid-js';
 import { Channel } from '../types';
 
 interface ChannelListProps {
@@ -10,9 +10,23 @@ interface ChannelListProps {
   onChannelSelect: (channelId: string) => void;
   onCreateChannel: () => void;
   onServerSettings: () => void;
+  onEditChannel?: (channel: Channel) => void;
 }
 
 export const ChannelList: Component<ChannelListProps> = (props) => {
+  const [contextMenu, setContextMenu] = createSignal<{ x: number; y: number; channel: Channel } | null>(null);
+
+  const handleContextMenu = (e: MouseEvent, channel: Channel) => {
+    e.preventDefault();
+    if (props.onEditChannel) {
+      setContextMenu({ x: e.clientX, y: e.clientY, channel });
+    }
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
   // Organize channels by category
   const organizedChannels = createMemo(() => {
     const categories = props.channels.filter(c => c.channelType === 'Category');
@@ -61,6 +75,7 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
                       class="channel-item channel-nested"
                       classList={{ active: props.currentChannel === channel._id }}
                       onClick={() => props.onChannelSelect(channel._id)}
+                      onContextMenu={(e) => handleContextMenu(e, channel)}
                   >
                     # {channel.name}
                   </button>
@@ -77,6 +92,7 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
               class="channel-item"
               classList={{ active: props.currentChannel === channel._id }}
               onClick={() => props.onChannelSelect(channel._id)}
+              onContextMenu={(e) => handleContextMenu(e, channel)}
             >
               # {channel.name}
             </button>
@@ -99,6 +115,32 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
           </For>
         </Show>
       </div>
+      
+      {/* Context Menu */}
+      <Show when={contextMenu()}>
+        <div 
+          class="context-menu-overlay" 
+          onClick={handleCloseContextMenu}
+        >
+          <div 
+            class="context-menu" 
+            style={{ left: `${contextMenu()!.x}px`, top: `${contextMenu()!.y}px` }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              class="context-menu-item"
+              onClick={() => {
+                if (props.onEditChannel) {
+                  props.onEditChannel(contextMenu()!.channel);
+                }
+                handleCloseContextMenu();
+              }}
+            >
+              ✏️ Edit Channel
+            </button>
+          </div>
+        </div>
+      </Show>
     </div>
   );
 };

@@ -120,6 +120,22 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
     }
   };
 
+  const getPresenceClass = (friend: Friend) => {
+    const presence = friend.status?.presence || 'Invisible';
+    if (presence === 'Online') return 'online';
+    if (presence === 'Idle') return 'idle';
+    if (presence === 'Busy') return 'dnd';
+    return '';
+  };
+
+  const getPresenceText = (friend: Friend) => {
+    const presence = friend.status?.presence || 'Offline';
+    if (presence === 'Idle') return 'Idle';
+    if (presence === 'Busy') return 'Do Not Disturb';
+    if (presence === 'Invisible') return 'Offline';
+    return presence;
+  };
+
   const pendingRequests = () => props.friends.filter(f => f.relationshipStatus === 'Incoming');
   const acceptedFriends = () => props.friends.filter(f => f.relationshipStatus === 'Friend');
 
@@ -182,14 +198,18 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
                     {friend.username[0].toUpperCase()}
                   </div>
                 )}
-                <div class="status-indicator" classList={{ online: friend.online }} />
+                <div class="status-indicator" classList={{ 
+                  online: getPresenceClass(friend) === 'online',
+                  idle: getPresenceClass(friend) === 'idle',
+                  dnd: getPresenceClass(friend) === 'dnd'
+                }} />
               </div>
               <div class="friend-info">
                 <div class="friend-name">
                   {friend.displayName || friend.username}
                 </div>
                 <div class="friend-username">
-                  {friend.online ? 'Online' : 'Offline'}
+                  {getPresenceText(friend)}
                 </div>
               </div>
               <div class="friend-actions">
