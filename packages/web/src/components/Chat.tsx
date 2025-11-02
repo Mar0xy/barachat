@@ -1,6 +1,5 @@
-import { Component, createSignal, Show, onMount, For, createEffect, batch } from 'solid-js';
+import { Component, createSignal, Show, onMount, createEffect } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { ImageCropper } from '../ImageCropper';
 import { CreateServerModal } from './modals/CreateServerModal';
 import { UserSettingsModal } from './modals/UserSettingsModal';
 import { ServerSettingsModal } from './modals/ServerSettingsModal';

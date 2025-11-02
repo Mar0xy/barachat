@@ -1,4 +1,4 @@
-import { Component, createSignal, Show } from 'solid-js';
+import { Component, createSignal } from 'solid-js';
 import { Server } from '../../types';
 import { API_URL } from '../../utils/constants';
 
