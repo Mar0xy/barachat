@@ -966,16 +966,32 @@ body {
 .message-input-container {
   padding: 16px;
   background: #1e1e1e;
-}
-
-.message-input {
   display: flex;
   align-items: center;
   gap: 0;
+}
+
+.message-input {
+  flex: 1;
+  padding: 12px;
   background: #2a2a2a;
+  border: none;
   border-radius: 8px;
-  padding: 0;
-  width: 100%;
+  color: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  min-height: 44px;
+  max-height: 200px;
+}
+
+.message-input:focus {
+  outline: none;
+  background: #303030;
+}
+
+.message-input::placeholder {
+  color: #72767d;
 }
 
 .attach-button {
