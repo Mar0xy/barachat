@@ -516,7 +516,7 @@ export const Chat: Component = () => {
             onTyping={handleTyping}
             user={user()}
             typingText={typingText()}
-            lightboxImage={lightboxImage()}
+            lightboxImage={lightboxImage}
             onLightboxClose={() => setLightboxImage(null)}
             onImageClick={(url) => setLightboxImage(url)}
             pendingAttachments={pendingAttachments()}

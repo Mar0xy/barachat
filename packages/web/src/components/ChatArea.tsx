@@ -11,7 +11,7 @@ interface ChatAreaProps {
   onTyping: () => void;
   user: User | null;
   typingText: string;
-  lightboxImage: string | null;
+  lightboxImage: () => string | null;
   onLightboxClose: () => void;
   onImageClick: (url: string) => void;
   pendingAttachments: string[];

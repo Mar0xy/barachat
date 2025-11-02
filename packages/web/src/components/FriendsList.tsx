@@ -119,8 +119,8 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
     }
   };
 
-  const pendingRequests = () => props.friends.filter(f => f.relationshipStatus === 'pending');
-  const acceptedFriends = () => props.friends.filter(f => f.relationshipStatus === 'accepted');
+  const pendingRequests = () => props.friends.filter(f => f.relationshipStatus === 'Incoming');
+  const acceptedFriends = () => props.friends.filter(f => f.relationshipStatus === 'Friend');
 
   return (
     <div class="friends-list">
