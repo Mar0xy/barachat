@@ -350,29 +350,36 @@ body {
   opacity: 0.9;
 }
 
-.message-input {
+.message-input-container {
   padding: 16px;
   background: #1e1e1e;
+}
+
+.message-input {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 0;
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 0;
+  width: 100%;
 }
 
 .attach-button {
-  width: 40px;
-  height: 40px;
-  background: #2a2a2a;
+  width: 44px;
+  height: 44px;
+  background: transparent;
   border: none;
-  border-radius: 8px;
-  color: #dcddde;
+  color: #b9bbbe;
   font-size: 20px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: color 0.2s;
   flex-shrink: 0;
+  border-radius: 8px 0 0 8px;
 }
 
 .attach-button:hover:not(:disabled) {
-  background: #303030;
+  color: #dcddde;
 }
 
 .attach-button:disabled {
@@ -417,21 +424,20 @@ body {
 
 .message-input form {
   flex: 1;
+  display: flex;
 }
 
 .message-input input {
-  width: 100%;
-  padding: 12px;
-  background: #2a2a2a;
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
   border: none;
-  border-radius: 8px;
   color: #fff;
   font-size: 15px;
 }
 
 .message-input input:focus {
   outline: none;
-  background: #303030;
 }
 
 .message-input input:disabled {

@@ -623,7 +623,7 @@ export const Chat: Component = () => {
             </For>
           </div>
         </Show>
-        <div class="message-input">
+        <div class="message-input-container">
           <input
             ref={fileInputRef}
             type="file"
@@ -631,15 +631,16 @@ export const Chat: Component = () => {
             style="display: none;"
             onChange={handleFileAttachment}
           />
-          <button 
-            class="attach-button" 
-            onClick={() => fileInputRef?.click()}
-            disabled={!currentChannel() || uploadingAttachment()}
-            title="Attach image"
-          >
-            {uploadingAttachment() ? '⏳' : '📎'}
-          </button>
-          <form onSubmit={sendMessage}>
+          <form onSubmit={sendMessage} class="message-input">
+            <button 
+              type="button"
+              class="attach-button" 
+              onClick={() => fileInputRef?.click()}
+              disabled={!currentChannel() || uploadingAttachment()}
+              title="Attach image"
+            >
+              {uploadingAttachment() ? '⏳' : '📎'}
+            </button>
             <input
               type="text"
               placeholder={`Message #${channels().find(c => c._id === currentChannel())?.name || 'channel'}`}
