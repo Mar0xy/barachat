@@ -7,6 +7,7 @@ interface FriendsListProps {
   onFriendSelect?: (friendId: string) => void;
   onUserProfileClick?: (userId: string) => void;
   onRefresh: () => void;
+  onSendDM?: (userId: string) => void;
 }
 
 export const FriendsList: Component<FriendsListProps> = (props) => {
@@ -192,7 +193,16 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
                 </div>
               </div>
               <div class="friend-actions">
-                <button class="icon-button" title="Message">
+                <button 
+                  class="icon-button" 
+                  title="Message"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (props.onSendDM) {
+                      props.onSendDM(friend._id);
+                    }
+                  }}
+                >
                   💬
                 </button>
                 <button class="icon-button" onClick={(e) => {

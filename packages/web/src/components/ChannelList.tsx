@@ -14,13 +14,13 @@ interface ChannelListProps {
 export const ChannelList: Component<ChannelListProps> = (props) => {
   // Organize channels by category
   const organizedChannels = createMemo(() => {
-    const categories = props.channels.filter(c => c.channelType === 'category');
-    const uncategorized = props.channels.filter(c => c.channelType !== 'category' && !c.category);
+    const categories = props.channels.filter(c => c.channelType === 'Category');
+    const uncategorized = props.channels.filter(c => c.channelType !== 'Category' && !c.category);
     
     return {
       categories: categories.map(cat => ({
         ...cat,
-        channels: props.channels.filter(ch => ch.category === cat._id && ch.channelType !== 'category')
+        channels: props.channels.filter(ch => ch.category === cat._id && ch.channelType !== 'Category')
       })),
       uncategorized
     };
@@ -38,25 +38,28 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
       <div class="channels-section">
         <div class="section-header">
           <span>{props.currentServer ? 'TEXT CHANNELS' : 'DIRECT MESSAGES'}</span>
-          <button class="add-channel" onClick={props.onCreateChannel}>
-            +
-          </button>
+          <Show when={props.currentServer}>
+            <button class="add-channel" onClick={props.onCreateChannel}>
+              +
+            </button>
+          </Show>
         </div>
         
-        {/* Categories with nested channels */}
-        <For each={organizedChannels().categories}>
-          {(category) => (
-            <div class="channel-category-group">
-              <div class="category-header">
-                <span class="category-arrow">▼</span>
-                <span class="category-name">{category.name}</span>
-              </div>
-              <For each={category.channels}>
-                {(channel) => (
-                  <button
-                    class="channel-item channel-nested"
-                    classList={{ active: props.currentChannel === channel._id }}
-                    onClick={() => props.onChannelSelect(channel._id)}
+        <Show when={props.currentServer}>
+          {/* Categories with nested channels */}
+          <For each={organizedChannels().categories}>
+            {(category) => (
+              <div class="channel-category-group">
+                <div class="category-header">
+                  <span class="category-arrow">▼</span>
+                  <span class="category-name">{category.name}</span>
+                </div>
+                <For each={category.channels}>
+                  {(channel) => (
+                    <button
+                      class="channel-item channel-nested"
+                      classList={{ active: props.currentChannel === channel._id }}
+                      onClick={() => props.onChannelSelect(channel._id)}
                   >
                     # {channel.name}
                   </button>
@@ -78,6 +81,7 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
             </button>
           )}
         </For>
+        </Show>
       </div>
     </div>
   );

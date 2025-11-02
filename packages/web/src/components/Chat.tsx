@@ -42,6 +42,34 @@ export const Chat: Component = () => {
   let fileInputRef: HTMLInputElement | undefined;
   const navigate = useNavigate();
 
+  // Create or open DM channel
+  const createOrOpenDM = async (userId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/channels/create-dm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      if (response.ok) {
+        const dmChannel = await response.json();
+        // Switch to home (no server) and select the DM channel
+        setCurrentServer('');
+        setCurrentChannel(dmChannel._id);
+        // Load messages for the DM
+        loadMessages(dmChannel._id);
+        // Close any open modals
+        setShowUserProfile(null);
+      }
+    } catch (error) {
+      console.error('Error creating DM:', error);
+    }
+  };
+
   // Load user data
   const loadUser = async () => {
     const token = localStorage.getItem('token');
@@ -51,6 +79,10 @@ export const Chat: Component = () => {
       });
       if (response.ok) {
         const userData = await response.json();
+        // Set default status if not set
+        if (!userData.status) {
+          userData.status = { presence: 'Online', text: '' };
+        }
         setUser(userData);
       }
     } catch (error) {
@@ -190,6 +222,9 @@ export const Chat: Component = () => {
       });
 
       if (response.ok) {
+        const message = await response.json();
+        // Immediately add the message to the list
+        setMessages([...messages(), message]);
         setMessageInput('');
         setPendingAttachments([]);
       }
@@ -416,9 +451,26 @@ export const Chat: Component = () => {
       const data = JSON.parse(event.data);
       
       if (data.type === 'Message') {
-        setMessages([...messages(), data.message]);
+        // Only add message if it's for the current channel and not already in the list (from our own send)
+        if (data.message.channel === currentChannel() && 
+            !messages().some(m => m._id === data.message._id)) {
+          setMessages([...messages(), data.message]);
+        }
       } else if (data.type === 'MessageDeleted') {
         setMessages(messages().filter(m => m._id !== data.messageId));
+      } else if (data.type === 'UserUpdate') {
+        // Update members list when user status changes
+        setMembers(members().map(m => 
+          m._id === data.userId 
+            ? { ...m, status: data.status } 
+            : m
+        ));
+        // Also update friends list
+        setFriends(friends().map(f => 
+          f._id === data.userId 
+            ? { ...f, status: data.status } 
+            : f
+        ));
       } else if (data.type === 'Typing') {
         const channelTypers = typingUsers().get(data.channel) || new Set();
         channelTypers.add(data.username);
@@ -549,6 +601,7 @@ export const Chat: Component = () => {
           friends={friends()}
           onUserProfileClick={loadUserProfile}
           onRefresh={loadFriends}
+          onSendDM={createOrOpenDM}
         />
       </Show>
       
@@ -595,8 +648,10 @@ export const Chat: Component = () => {
         <UserProfileModal
           user={showUserProfile()}
           currentUser={user()}
+          friends={friends()}
           onClose={() => setShowUserProfile(null)}
           onRefresh={loadFriends}
+          onSendDM={createOrOpenDM}
         />
       </Show>
     </div>

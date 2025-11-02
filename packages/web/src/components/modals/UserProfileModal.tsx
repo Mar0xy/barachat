@@ -1,16 +1,35 @@
-import { Component, createSignal, Show } from 'solid-js';
-import { User } from '../../types';
+import { Component, createSignal, Show, createMemo } from 'solid-js';
+import { User, Friend } from '../../types';
 import { API_URL } from '../../utils/constants';
 
 interface UserProfileModalProps {
   user: User | null;
   currentUser: User | null;
+  friends?: Friend[];
   onClose: () => void;
   onRefresh?: () => void;
+  onSendDM?: (userId: string) => void;
 }
 
 export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
   const [sending, setSending] = createSignal(false);
+
+  const isCurrentUser = createMemo(() => props.user?._id === props.currentUser?._id);
+  
+  const friendshipStatus = createMemo(() => {
+    if (!props.user || !props.friends) return null;
+    return props.friends.find(f => f._id === props.user!._id);
+  });
+
+  const isFriend = createMemo(() => {
+    const status = friendshipStatus();
+    return status?.relationshipStatus === 'Friend';
+  });
+
+  const hasPendingRequest = createMemo(() => {
+    const status = friendshipStatus();
+    return status?.relationshipStatus === 'Outgoing' || status?.relationshipStatus === 'Incoming';
+  });
 
   const sendFriendRequest = async () => {
     if (!props.user) return;
@@ -38,8 +57,11 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
   const sendDirectMessage = async () => {
     if (!props.user) return;
     
-    // TODO: Create DM channel and navigate to it
-    alert('Direct messaging will be implemented soon!');
+    if (props.onSendDM) {
+      props.onSendDM(props.user._id);
+    } else {
+      alert('Direct messaging will be implemented soon!');
+    }
   };
 
   const getPresenceText = () => {
@@ -75,8 +97,6 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
         return 'offline';
     }
   };
-
-  const isCurrentUser = () => props.user?._id === props.currentUser?._id;
 
   return (
     <Show when={props.user}>
@@ -137,13 +157,25 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
                   <button class="button-primary" onClick={sendDirectMessage}>
                     Send Message
                   </button>
-                  <button 
-                    class="button-secondary" 
-                    onClick={sendFriendRequest}
-                    disabled={sending()}
-                  >
-                    {sending() ? 'Sending...' : 'Add Friend'}
-                  </button>
+                  <Show when={!isFriend() && !hasPendingRequest()}>
+                    <button 
+                      class="button-secondary" 
+                      onClick={sendFriendRequest}
+                      disabled={sending()}
+                    >
+                      {sending() ? 'Sending...' : 'Add Friend'}
+                    </button>
+                  </Show>
+                  <Show when={hasPendingRequest()}>
+                    <button class="button-secondary" disabled>
+                      {friendshipStatus()?.relationshipStatus === 'Outgoing' ? 'Request Sent' : 'Pending Request'}
+                    </button>
+                  </Show>
+                  <Show when={isFriend()}>
+                    <button class="button-secondary" disabled>
+                      ✓ Friends
+                    </button>
+                  </Show>
                 </div>
               </Show>
             </div>
