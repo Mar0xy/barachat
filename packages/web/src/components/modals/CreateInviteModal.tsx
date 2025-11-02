@@ -1,4 +1,5 @@
 import { Component, createSignal } from 'solid-js';
+import { API_URL } from '../../utils/constants';
 
 interface CreateInviteModalProps {
   serverId: string;
@@ -81,6 +82,3 @@ export const CreateInviteModal: Component<CreateInviteModalProps> = (props) => {
     </div>
   );
 };
-
-// Import API_URL for the component to work
-import { API_URL } from '../../utils/constants';

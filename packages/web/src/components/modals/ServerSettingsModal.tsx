@@ -6,6 +6,7 @@ import { ImageCropper } from '../../ImageCropper';
 interface ServerSettingsModalProps {
   server: Server | undefined;
   isOwner?: boolean;
+  currentUserId?: string;
   onClose: () => void;
   onUpdate: (server: Server) => void;
   onLeave?: () => void;
@@ -93,7 +94,8 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
   const handleLeaveServer = async () => {
     if (!props.server) return;
     
-    const confirmMessage = props.server.owner === localStorage.getItem('userId')
+    const isOwner = props.server.owner === props.currentUserId;
+    const confirmMessage = isOwner
       ? 'You are the owner of this server. Leaving will DELETE the server permanently. Are you sure?'
       : 'Are you sure you want to leave this server?';
     
@@ -329,7 +331,7 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
                 Leave Server
               </button>
               <p class="danger-text">
-                {props.server?.owner === localStorage.getItem('userId')
+                {props.server?.owner === props.currentUserId
                   ? 'Warning: Leaving will permanently delete this server!'
                   : 'You will no longer have access to this server.'}
               </p>

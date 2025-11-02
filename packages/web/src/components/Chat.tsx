@@ -824,6 +824,7 @@ export const Chat: Component = () => {
         <ServerSettingsModal
           server={servers().find(s => s._id === currentServer())}
           isOwner={isCurrentServerOwner()}
+          currentUserId={user()?._id}
           onClose={() => setShowServerSettings(false)}
           onUpdate={(updatedServer) => {
             // Normalize server name

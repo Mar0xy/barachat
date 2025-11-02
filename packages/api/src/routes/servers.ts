@@ -433,13 +433,15 @@ serversRouter.post('/:serverId/leave', authenticate, async (req: AuthRequest, re
     if (server.owner === req.userId) {
       // Delete the entire server if owner leaves
       
-      // Delete all channels
-      await db.channels.deleteMany({ server: serverId });
-      
-      // Delete all messages in those channels
+      // Get all channels first (before deleting them)
       const channels = await db.channels.find({ server: serverId }).toArray();
       const channelIds = channels.map(c => c._id);
+      
+      // Delete all messages in those channels
       await db.messages.deleteMany({ channel: { $in: channelIds } });
+      
+      // Delete all channels
+      await db.channels.deleteMany({ server: serverId });
       
       // Delete all members
       await db.members.deleteMany({ '_id.server': serverId } as any);
