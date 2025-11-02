@@ -11,6 +11,32 @@ interface User {
   discriminator: string;
   displayName?: string;
   avatar?: string;
+  bio?: string;
+  status?: {
+    text?: string;
+    presence?: 'Online' | 'Idle' | 'Busy' | 'Invisible';
+  };
+  online?: boolean;
+}
+
+interface Friend {
+  _id: string;
+  username: string;
+  discriminator: string;
+  displayName?: string;
+  avatar?: string;
+  online?: boolean;
+  relationshipStatus: string;
+}
+
+interface Member {
+  _id: {
+    server: string;
+    user: string;
+  };
+  user: User;
+  online: boolean;
+  nickname?: string;
 }
 
 interface Server {
@@ -142,6 +168,13 @@ export const Chat: Component = () => {
   const [lightboxImage, setLightboxImage] = createSignal<string | null>(null);
   const [uploadingAttachment, setUploadingAttachment] = createSignal(false);
   const [pendingAttachments, setPendingAttachments] = createSignal<string[]>([]);
+  
+  // New state for friends and members
+  const [friends, setFriends] = createSignal<Friend[]>([]);
+  const [members, setMembers] = createSignal<Member[]>([]);
+  const [showUserProfile, setShowUserProfile] = createSignal<User | null>(null);
+  const [serverChannelMemory, setServerChannelMemory] = createSignal<Record<string, string>>({});
+  
   let fileInputRef: HTMLInputElement | undefined;
   const navigate = useNavigate();
 
