@@ -1,6 +1,24 @@
 #!/bin/bash
 
 # Start Barachat Development Environment
+# This script starts all development servers together
+
+set -e
+
+# Cleanup function to stop all background processes
+cleanup() {
+    echo ""
+    echo "Stopping all services..."
+    
+    # Kill background jobs started by this script
+    jobs -p | xargs -r kill 2>/dev/null || true
+    
+    echo "All services stopped."
+    exit 0
+}
+
+# Set up trap to call cleanup on script exit
+trap cleanup EXIT INT TERM
 
 echo "Starting Barachat..."
 echo ""
@@ -32,7 +50,7 @@ echo "- API Server: http://localhost:3000"
 echo "- WebSocket Server: ws://localhost:3001"
 echo ""
 echo "Press Ctrl+C to stop all services"
+echo ""
 
-# Wait for Ctrl+C
-trap "kill $API_PID $WS_PID $WEB_PID; exit" INT
+# Wait for background jobs
 wait

@@ -74,6 +74,17 @@ pnpm build:deps
 
 ### 5. Start the development servers
 
+**Option A: Use the start script (recommended)**
+
+```bash
+# This will start all services together
+./start.sh
+```
+
+Press `Ctrl+C` to stop all services. The script will automatically clean up all background processes.
+
+**Option B: Run services separately**
+
 Open three terminal windows:
 
 ```bash
@@ -91,6 +102,21 @@ The application will be available at:
 - **Web Frontend**: http://localhost:5173
 - **API Server**: http://localhost:3000
 - **WebSocket Server**: ws://localhost:3001
+
+### Stopping Services
+
+When using the start script, simply press `Ctrl+C` and all services will be stopped automatically.
+
+If running services separately, press `Ctrl+C` in each terminal window.
+
+If you need to manually stop all Node.js processes (e.g., if a process gets stuck):
+```bash
+# List all Node.js processes
+ps aux | grep node
+
+# Kill specific process by PID
+kill <PID>
+```
 
 ## Development
 
