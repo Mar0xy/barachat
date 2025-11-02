@@ -20,6 +20,39 @@ usersRouter.get('/@me', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+// Search users
+usersRouter.get('/search', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const query = req.query.q as string;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter required' });
+    }
+
+    // Parse username#discriminator format or just username
+    const parts = query.split('#');
+    const username = parts[0];
+    const discriminator = parts[1];
+
+    const searchQuery: any = {
+      username: { $regex: username, $options: 'i' }
+    };
+
+    if (discriminator) {
+      searchQuery.discriminator = discriminator;
+    }
+
+    // Exclude the current user from search results
+    searchQuery._id = { $ne: req.userId };
+
+    const users = await db.users.find(searchQuery).limit(10).toArray();
+    res.json(users);
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get user by ID
 usersRouter.get('/:userId', authenticate, async (req: AuthRequest, res) => {
   try {

@@ -232,6 +232,126 @@ body {
   color: #fff;
 }
 
+/* Friends List */
+.friends-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.friends-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.friends-header h3 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.friends-section {
+  margin-bottom: 24px;
+}
+
+.friends-section h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8e9297;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.friend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.friend-item:hover {
+  background: #2a2a2a;
+}
+
+.friend-item.pending {
+  background: rgba(88, 101, 242, 0.1);
+  border: 1px solid rgba(88, 101, 242, 0.3);
+}
+
+.friend-avatar {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.friend-avatar img,
+.friend-avatar .avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  background: #5865f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.status-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #747f8d;
+  border: 3px solid #1e1e1e;
+}
+
+.status-indicator.online {
+  background: #3ba55d;
+}
+
+.friend-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.friend-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friend-username {
+  font-size: 13px;
+  color: #8e9297;
+}
+
+.friend-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .channel-hash {
   font-size: 18px;
   opacity: 0.6;

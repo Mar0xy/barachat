@@ -5,6 +5,7 @@ import { CreateServerModal } from './modals/CreateServerModal';
 import { UserSettingsModal } from './modals/UserSettingsModal';
 import { ServerSettingsModal } from './modals/ServerSettingsModal';
 import { CreateChannelModal } from './modals/CreateChannelModal';
+import { FriendsList } from './FriendsList';
 import { User, Friend, Member, Server, Channel, Message } from '../types';
 import { API_URL, WS_URL } from '../utils/constants';
 import { ServerList } from './ServerList';
@@ -69,6 +70,22 @@ export const Chat: Component = () => {
       }
     } catch (error) {
       console.error('Error loading servers:', error);
+    }
+  };
+
+  // Load friends
+  const loadFriends = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/users/@me/relationships`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const friendList = await response.json();
+        setFriends(friendList);
+      }
+    } catch (error) {
+      console.error('Error loading friends:', error);
     }
   };
 
@@ -338,6 +355,7 @@ export const Chat: Component = () => {
     setUser(JSON.parse(userStr));
     loadUser();
     loadServers();
+    loadFriends();
 
     // Connect WebSocket
     const websocket = new WebSocket(WS_URL);
@@ -443,26 +461,33 @@ export const Chat: Component = () => {
         onServerSettings={() => setShowServerSettings(true)}
       />
       
-      <ChatArea
-        messages={messages()}
-        currentChannel={currentChannel()}
-        messageInput={messageInput()}
-        onMessageInputChange={setMessageInput}
-        onSendMessage={sendMessage}
-        onDeleteMessage={deleteMessage}
-        onTyping={handleTyping}
-        user={user()}
-        typingText={typingText()}
-        lightboxImage={lightboxImage()}
-        onLightboxClose={() => setLightboxImage(null)}
-        onImageClick={(url) => setLightboxImage(url)}
-        pendingAttachments={pendingAttachments()}
-        onRemoveAttachment={removePendingAttachment}
-        onClearAttachments={() => setPendingAttachments([])}
-        uploadingAttachment={uploadingAttachment()}
-        onAttachmentUpload={handleAttachmentUpload}
-        fileInputRef={fileInputRef}
-      />
+      <Show when={!currentServer()} fallback={
+        <ChatArea
+          messages={messages()}
+          currentChannel={currentChannel()}
+          messageInput={messageInput()}
+          onMessageInputChange={setMessageInput}
+          onSendMessage={sendMessage}
+          onDeleteMessage={deleteMessage}
+          onTyping={handleTyping}
+          user={user()}
+          typingText={typingText()}
+          lightboxImage={lightboxImage()}
+          onLightboxClose={() => setLightboxImage(null)}
+          onImageClick={(url) => setLightboxImage(url)}
+          pendingAttachments={pendingAttachments()}
+          onRemoveAttachment={removePendingAttachment}
+          onClearAttachments={() => setPendingAttachments([])}
+          uploadingAttachment={uploadingAttachment()}
+          onAttachmentUpload={handleAttachmentUpload}
+          fileInputRef={fileInputRef}
+        />
+      }>
+        <FriendsList
+          friends={friends()}
+          onRefresh={loadFriends}
+        />
+      </Show>
       
       <UserPanel
         user={user()}
