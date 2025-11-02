@@ -137,7 +137,7 @@ export const Chat: Component = () => {
         // Auto-select first channel if no channel is selected and no saved channel
         const memory = serverChannelMemory();
         if (!memory[serverId] && channelList.length > 0 && !currentChannel()) {
-          const firstTextChannel = channelList.find((c: Channel) => c.channelType === 'text');
+          const firstTextChannel = channelList.find((c: Channel) => c.channelType === 'TextChannel');
           if (firstTextChannel) {
             handleChannelSelect(firstTextChannel._id);
           }

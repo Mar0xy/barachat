@@ -1,6 +1,6 @@
 import { Component, createSignal, Show } from 'solid-js';
-import { User } from '../types';
-import { API_URL } from '../utils/constants';
+import { User } from '../../types';
+import { API_URL } from '../../utils/constants';
 
 interface UserProfileModalProps {
   user: User | null;

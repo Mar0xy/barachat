@@ -231,7 +231,7 @@ serversRouter.get('/:serverId/members', authenticate, async (req: AuthRequest, r
     // Get presence status for each user
     const membersWithPresence = await Promise.all(
       members.map(async (member) => {
-        const userInfo = users.find(u => u._id === member.user);
+        const userInfo = users.find(u => u._id === member._id.user);
         const online = await db.getPresence(member._id.user);
         
         return {
