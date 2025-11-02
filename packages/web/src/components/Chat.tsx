@@ -538,12 +538,13 @@ export const Chat: Component = () => {
             setUser({ ...currentUser, ...data.data });
           }
           
-          // Update members list
-          setMembers(members().map(m => 
-            m._id === data.id 
-              ? { ...m, ...data.data } 
-              : m
-          ));
+          // Update members list (members have nested user objects)
+          setMembers(members().map(m => {
+            if (m._id.user === data.id) {
+              return { ...m, user: { ...m.user, ...data.data } };
+            }
+            return m;
+          }));
           
           // Update friends list
           setFriends(friends().map(f => 

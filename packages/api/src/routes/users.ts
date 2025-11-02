@@ -89,7 +89,7 @@ usersRouter.patch('/@me', authenticate, async (req: AuthRequest, res) => {
     const user = await db.users.findOne({ _id: req.userId });
     
     // Broadcast user update to all connected clients via Redis
-    if (user && (status !== undefined || displayName !== undefined || avatar !== undefined)) {
+    if (user && Object.keys(update).length > 0) {
       await db.publishEvent({
         type: EventType.UserUpdate,
         id: user._id,
