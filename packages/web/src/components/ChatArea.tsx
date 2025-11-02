@@ -50,7 +50,7 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
           Select a channel to start chatting
         </div>
       }>
-        <div class="messages-container">
+        <div class="messages">
           <For each={props.messages}>
             {(message) => (
               <div class="message" classList={{ 'own-message': message.author._id === props.user?._id }}>

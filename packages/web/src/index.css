@@ -861,6 +861,15 @@ body {
   gap: 16px;
 }
 
+.no-channel-selected {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: 18px;
+}
+
 .message {
   display: flex;
   gap: 16px;
