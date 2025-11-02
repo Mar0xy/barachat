@@ -31,7 +31,13 @@ interface Channel {
 
 interface Message {
   _id: string;
-  author: string;
+  author: {
+    _id: string;
+    username: string;
+    discriminator: string;
+    displayName?: string;
+    avatar?: string;
+  };
   content: string;
   channel: string;
 }
@@ -288,7 +294,9 @@ export const Chat: Component = () => {
               onClick={() => setCurrentServer(server._id)}
               title={server.name}
             >
-              {server.icon || server.name.substring(0, 2).toUpperCase()}
+              <Show when={server.icon} fallback={server.name.substring(0, 2).toUpperCase()}>
+                <img src={server.icon} alt={server.name} style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />
+              </Show>
             </button>
           )}
         </For>
@@ -330,9 +338,13 @@ export const Chat: Component = () => {
         </div>
         <div class="user-panel">
           <div class="user-info">
-            <div class="user-avatar">{user()?.username?.substring(0, 2).toUpperCase()}</div>
+            <div class="user-avatar">
+              <Show when={user()?.avatar} fallback={user()?.username?.substring(0, 2).toUpperCase()}>
+                <img src={user()?.avatar} alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />
+              </Show>
+            </div>
             <div class="user-details">
-              <div class="user-name">{user()?.username}</div>
+              <div class="user-name">{user()?.displayName || user()?.username}</div>
               <div class="user-tag">#{user()?.discriminator}</div>
             </div>
           </div>
@@ -352,10 +364,14 @@ export const Chat: Component = () => {
           <For each={messages()}>
             {(message) => (
               <div class="message">
-                <div class="message-avatar">{message.author.substring(0, 2).toUpperCase()}</div>
+                <div class="message-avatar">
+                  <Show when={message.author?.avatar} fallback={message.author?.username?.substring(0, 2).toUpperCase() || '??'}>
+                    <img src={message.author.avatar} alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />
+                  </Show>
+                </div>
                 <div class="message-content-wrapper">
                   <div class="message-header">
-                    <span class="message-author">{message.author}</span>
+                    <span class="message-author">{message.author?.displayName || message.author?.username || 'Unknown'}</span>
                     <span class="message-timestamp">{new Date().toLocaleTimeString()}</span>
                   </div>
                   <div class="message-content">{message.content}</div>
@@ -510,7 +526,7 @@ const UserSettingsModal: Component<{
 
       if (response.ok) {
         const data = await response.json();
-        setAvatar(API_URL + data.url);
+        setAvatar(data.url);
       } else {
         alert('Failed to upload avatar');
       }
@@ -653,7 +669,7 @@ const ServerSettingsModal: Component<{
 
       if (response.ok) {
         const data = await response.json();
-        setIcon(API_URL + data.url);
+        setIcon(data.url);
       } else {
         alert('Failed to upload server icon');
       }

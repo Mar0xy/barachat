@@ -31,7 +31,20 @@ messagesRouter.post('/:channelId/messages', authenticate, async (req: AuthReques
       { $set: { lastMessageId: message._id } }
     );
 
-    res.json(message);
+    // Populate author information for response
+    const author = await db.users.findOne({ _id: req.userId! });
+    const messageWithAuthor = {
+      ...message,
+      author: author ? {
+        _id: author._id,
+        username: author.username,
+        discriminator: author.discriminator,
+        displayName: author.displayName,
+        avatar: author.avatar
+      } : { _id: req.userId!, username: 'Unknown', discriminator: '0000' }
+    };
+
+    res.json(messageWithAuthor);
   } catch (error) {
     console.error('Error sending message:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -56,7 +69,24 @@ messagesRouter.get('/:channelId/messages', authenticate, async (req: AuthRequest
       .limit(limit)
       .toArray();
 
-    res.json(messages.reverse());
+    // Populate author information
+    const messagesWithAuthors = await Promise.all(
+      messages.map(async (message) => {
+        const author = await db.users.findOne({ _id: message.author });
+        return {
+          ...message,
+          author: author ? {
+            _id: author._id,
+            username: author.username,
+            discriminator: author.discriminator,
+            displayName: author.displayName,
+            avatar: author.avatar
+          } : { _id: message.author, username: 'Unknown', discriminator: '0000' }
+        };
+      })
+    );
+
+    res.json(messagesWithAuthors.reverse());
   } catch (error) {
     console.error('Error fetching messages:', error);
     res.status(500).json({ error: 'Internal server error' });
