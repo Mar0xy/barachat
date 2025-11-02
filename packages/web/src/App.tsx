@@ -611,7 +611,7 @@ export const Chat: Component = () => {
             {getTypingIndicator()}
           </div>
         </Show>
-        <Show when={pendingAttachments().length > 0}>
+        <Show when={pendingAttachments().length > 0 || uploadingAttachment()}>
           <div class="pending-attachments">
             <For each={pendingAttachments()}>
               {(attachment, index) => (
@@ -621,6 +621,12 @@ export const Chat: Component = () => {
                 </div>
               )}
             </For>
+            <Show when={uploadingAttachment()}>
+              <div class="pending-attachment uploading">
+                <div class="upload-spinner">⏳</div>
+                <span>Uploading...</span>
+              </div>
+            </Show>
           </div>
         </Show>
         <div class="message-input-container">

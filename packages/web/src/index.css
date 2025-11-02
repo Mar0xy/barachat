@@ -392,6 +392,7 @@ body {
   background: #1e1e1e;
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .pending-attachment {
@@ -405,6 +406,35 @@ body {
   height: 100%;
   object-fit: cover;
   border-radius: 4px;
+}
+
+.pending-attachment.uploading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #2a2a2a;
+  border-radius: 4px;
+  gap: 4px;
+}
+
+.pending-attachment.uploading span {
+  font-size: 11px;
+  color: #8e9297;
+}
+
+.upload-spinner {
+  font-size: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .pending-attachment button {
