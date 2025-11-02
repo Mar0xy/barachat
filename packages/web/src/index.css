@@ -106,6 +106,75 @@ body {
   padding: 8px;
 }
 
+.channels-section {
+  padding: 8px 0;
+}
+
+.section-header {
+  padding: 8px 8px 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8e9297;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.add-channel {
+  background: none;
+  border: none;
+  color: #8e9297;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.add-channel:hover {
+  color: #dcddde;
+}
+
+.channel-category-group {
+  margin-bottom: 8px;
+}
+
+.category-header {
+  padding: 8px 8px 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8e9297;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.category-header:hover {
+  color: #dcddde;
+}
+
+.category-arrow {
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.category-name {
+  flex: 1;
+}
+
+.channel-nested {
+  padding-left: 24px;
+}
+
 .channel-category {
   padding: 8px 8px 4px 8px;
   font-size: 12px;
@@ -146,6 +215,11 @@ body {
   gap: 6px;
   color: #8e9297;
   transition: all 0.15s;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 15px;
 }
 
 .channel-item:hover {

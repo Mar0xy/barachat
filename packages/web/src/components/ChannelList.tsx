@@ -1,4 +1,4 @@
-import { Component, For, Show } from 'solid-js';
+import { Component, For, Show, createMemo } from 'solid-js';
 import { Channel } from '../types';
 
 interface ChannelListProps {
@@ -11,6 +11,20 @@ interface ChannelListProps {
 }
 
 export const ChannelList: Component<ChannelListProps> = (props) => {
+  // Organize channels by category
+  const organizedChannels = createMemo(() => {
+    const categories = props.channels.filter(c => c.channelType === 'category');
+    const uncategorized = props.channels.filter(c => c.channelType !== 'category' && !c.category);
+    
+    return {
+      categories: categories.map(cat => ({
+        ...cat,
+        channels: props.channels.filter(ch => ch.category === cat._id && ch.channelType !== 'category')
+      })),
+      uncategorized
+    };
+  });
+
   return (
     <div class="channel-list">
       <Show when={props.currentServer}>
@@ -22,13 +36,37 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
       
       <div class="channels-section">
         <div class="section-header">
-          <span>TEXT CHANNELS</span>
+          <span>{props.currentServer ? 'TEXT CHANNELS' : 'DIRECT MESSAGES'}</span>
           <button class="add-channel" onClick={props.onCreateChannel}>
             +
           </button>
         </div>
         
-        <For each={props.channels.filter(c => c.channelType === 'text')}>
+        {/* Categories with nested channels */}
+        <For each={organizedChannels().categories}>
+          {(category) => (
+            <div class="channel-category-group">
+              <div class="category-header">
+                <span class="category-arrow">▼</span>
+                <span class="category-name">{category.name}</span>
+              </div>
+              <For each={category.channels}>
+                {(channel) => (
+                  <button
+                    class="channel-item channel-nested"
+                    classList={{ active: props.currentChannel === channel._id }}
+                    onClick={() => props.onChannelSelect(channel._id)}
+                  >
+                    # {channel.name}
+                  </button>
+                )}
+              </For>
+            </div>
+          )}
+        </For>
+        
+        {/* Uncategorized channels */}
+        <For each={organizedChannels().uncategorized}>
           {(channel) => (
             <button
               class="channel-item"

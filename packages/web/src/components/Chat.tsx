@@ -82,6 +82,15 @@ export const Chat: Component = () => {
       if (response.ok) {
         const channelList = await response.json();
         setChannels(channelList);
+        
+        // Auto-select first channel if no channel is selected and no saved channel
+        const memory = serverChannelMemory();
+        if (!memory[serverId] && channelList.length > 0 && !currentChannel()) {
+          const firstTextChannel = channelList.find((c: Channel) => c.channelType === 'text');
+          if (firstTextChannel) {
+            handleChannelSelect(firstTextChannel._id);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading channels:', error);
@@ -177,28 +186,9 @@ export const Chat: Component = () => {
   };
 
   // Create channel
-  const createChannel = async (name: string) => {
-    const token = localStorage.getItem('token');
-    const serverId = currentServer();
-    
-    try {
-      const response = await fetch(`${API_URL}/servers/${serverId}/channels`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ name, channelType: 'text' })
-      });
-
-      if (response.ok) {
-        const channel = await response.json();
-        setChannels([...channels(), channel]);
-        setShowCreateChannel(false);
-      }
-    } catch (error) {
-      console.error('Error creating channel:', error);
-    }
+  const createChannel = (channel: Channel) => {
+    setChannels([...channels(), channel]);
+    setShowCreateChannel(false);
   };
 
   // Update user profile
@@ -317,6 +307,15 @@ export const Chat: Component = () => {
     const serverId = currentServer();
     if (serverId) {
       loadChannels(serverId);
+      // Restore last channel for this server
+      const memory = serverChannelMemory();
+      const lastChannel = memory[serverId];
+      if (lastChannel) {
+        setCurrentChannel(lastChannel);
+      }
+    } else {
+      // When switching to home, clear current channel
+      setCurrentChannel('');
     }
   });
 
@@ -411,6 +410,15 @@ export const Chat: Component = () => {
     return 'Multiple users are typing...';
   };
 
+  const handleChannelSelect = (channelId: string) => {
+    setCurrentChannel(channelId);
+    // Save channel selection to memory for current server
+    const serverId = currentServer();
+    if (serverId) {
+      setServerChannelMemory({ ...serverChannelMemory(), [serverId]: channelId });
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -430,7 +438,7 @@ export const Chat: Component = () => {
         channels={channels()}
         currentChannel={currentChannel()}
         currentServer={currentServer()}
-        onChannelSelect={(channelId) => setCurrentChannel(channelId)}
+        onChannelSelect={handleChannelSelect}
         onCreateChannel={() => setShowCreateChannel(true)}
         onServerSettings={() => setShowServerSettings(true)}
       />
@@ -487,6 +495,8 @@ export const Chat: Component = () => {
       
       <Show when={showCreateChannel()}>
         <CreateChannelModal
+          serverId={currentServer()}
+          categories={channels().filter(c => c.channelType === 'category')}
           onClose={() => setShowCreateChannel(false)}
           onCreate={createChannel}
         />
