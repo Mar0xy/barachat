@@ -13,17 +13,17 @@ The workflow runs on:
 
 ### Images Built
 
-The workflow builds and publishes three Docker images:
+The workflow builds and publishes three Docker images to the same repository with different tags:
 
-1. **API Server** (`ghcr.io/mar0xy/barachat-api`)
+1. **API Server** (`ghcr.io/mar0xy/barachat:api`)
    - Built from `Dockerfile.api`
    - Contains the Express-based REST API server
 
-2. **WebSocket Server** (`ghcr.io/mar0xy/barachat-websocket`)
+2. **WebSocket Server** (`ghcr.io/mar0xy/barachat:websocket`)
    - Built from `Dockerfile.websocket`
    - Contains the WebSocket server for real-time communication
 
-3. **Web Frontend** (`ghcr.io/mar0xy/barachat-web`)
+3. **Web Frontend** (`ghcr.io/mar0xy/barachat:web`)
    - Built from `Dockerfile.web`
    - Contains the Solid.js web application served by nginx
 
@@ -31,11 +31,12 @@ The workflow builds and publishes three Docker images:
 
 Images are tagged with multiple tags for flexibility:
 
-- `latest` - Latest version from the default branch (main/master)
-- `<branch-name>` - Branch name for feature branches
-- `pr-<number>` - Pull request number for PR builds (not pushed)
-- `<branch>-<sha>` - Branch name with short commit SHA
-- Semantic version tags when using git tags (e.g., `v1.0.0`, `1.0`, `1`)
+- `api`, `websocket`, `web` - Latest version from the default branch (main/master)
+- `latest-api`, `latest-websocket`, `latest-web` - Alias for latest from default branch
+- `<branch-name>-api` - Branch-specific tags for each component
+- `pr-<number>-api` - Pull request tags (not pushed)
+- `<branch>-<sha>-api` - Branch with commit SHA tags
+- Semantic version tags when using git tags (e.g., `v1.0.0-api`, `1.0-api`, `1-api`)
 
 ### Features
 
@@ -51,9 +52,9 @@ Images are automatically published to GHCR and can be used by:
 
 ```bash
 # Pull latest images
-docker pull ghcr.io/mar0xy/barachat-api:latest
-docker pull ghcr.io/mar0xy/barachat-websocket:latest
-docker pull ghcr.io/mar0xy/barachat-web:latest
+docker pull ghcr.io/mar0xy/barachat:api
+docker pull ghcr.io/mar0xy/barachat:websocket
+docker pull ghcr.io/mar0xy/barachat:web
 
 # Or use docker-compose (configured by default)
 docker compose pull

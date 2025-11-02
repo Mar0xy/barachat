@@ -13,7 +13,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/barachat
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-api:
@@ -41,14 +41,15 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_PREFIX }}-api
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch,suffix=-api
+            type=ref,event=pr,suffix=-api
+            type=semver,pattern={{version}},suffix=-api
+            type=semver,pattern={{major}}.{{minor}},suffix=-api
+            type=sha,prefix={{branch}}-,suffix=-api
+            type=raw,value=api,enable={{is_default_branch}}
+            type=raw,value=latest-api,enable={{is_default_branch}}
 
       - name: Build and push API image
         uses: docker/build-push-action@v5
@@ -86,14 +87,15 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_PREFIX }}-websocket
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch,suffix=-websocket
+            type=ref,event=pr,suffix=-websocket
+            type=semver,pattern={{version}},suffix=-websocket
+            type=semver,pattern={{major}}.{{minor}},suffix=-websocket
+            type=sha,prefix={{branch}}-,suffix=-websocket
+            type=raw,value=websocket,enable={{is_default_branch}}
+            type=raw,value=latest-websocket,enable={{is_default_branch}}
 
       - name: Build and push WebSocket image
         uses: docker/build-push-action@v5
@@ -131,14 +133,15 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_PREFIX }}-web
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch,suffix=-web
+            type=ref,event=pr,suffix=-web
+            type=semver,pattern={{version}},suffix=-web
+            type=semver,pattern={{major}}.{{minor}},suffix=-web
+            type=sha,prefix={{branch}}-,suffix=-web
+            type=raw,value=web,enable={{is_default_branch}}
+            type=raw,value=latest-web,enable={{is_default_branch}}
 
       - name: Build and push Web image
         uses: docker/build-push-action@v5

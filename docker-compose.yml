@@ -19,7 +19,7 @@ services:
 
   api:
     # Use pre-built image from GitHub Container Registry
-    image: ghcr.io/mar0xy/barachat-api:latest
+    image: ghcr.io/mar0xy/barachat:api
     # Uncomment below to build locally instead:
     # build:
     #   context: .
@@ -42,7 +42,7 @@ services:
 
   websocket:
     # Use pre-built image from GitHub Container Registry
-    image: ghcr.io/mar0xy/barachat-websocket:latest
+    image: ghcr.io/mar0xy/barachat:websocket
     # Uncomment below to build locally instead:
     # build:
     #   context: .
@@ -63,7 +63,7 @@ services:
 
   web:
     # Use pre-built image from GitHub Container Registry
-    image: ghcr.io/mar0xy/barachat-web:latest
+    image: ghcr.io/mar0xy/barachat:web
     # Uncomment below to build locally instead:
     # build:
     #   context: .

@@ -14,9 +14,9 @@ Barachat provides two ways to use Docker images:
 The `docker-compose.yml` is configured to use pre-built images from GitHub Container Registry by default. These images are automatically built and published on every push to the main branch.
 
 Images are available at:
-- `ghcr.io/mar0xy/barachat-api:latest`
-- `ghcr.io/mar0xy/barachat-websocket:latest`
-- `ghcr.io/mar0xy/barachat-web:latest`
+- `ghcr.io/mar0xy/barachat:api`
+- `ghcr.io/mar0xy/barachat:websocket`
+- `ghcr.io/mar0xy/barachat:web`
 
 To use pre-built images, simply run:
 ```bash
@@ -30,7 +30,7 @@ If you want to build images locally (e.g., for development or if you've made loc
 ```yaml
 api:
   # Use pre-built image from GitHub Container Registry
-  # image: ghcr.io/mar0xy/barachat-api:latest
+  # image: ghcr.io/mar0xy/barachat:api
   # Uncomment below to build locally instead:
   build:
     context: .
