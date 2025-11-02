@@ -559,7 +559,9 @@ export const Chat: Component = () => {
         <ServerSettingsModal
           server={servers().find(s => s._id === currentServer())}
           onClose={() => setShowServerSettings(false)}
-          onUpdate={(updates) => updateServer(currentServer(), updates)}
+          onUpdate={(updatedServer) => {
+            setServers(servers().map(s => s._id === updatedServer._id ? updatedServer : s));
+          }}
         />
       </Show>
       

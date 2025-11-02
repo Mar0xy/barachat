@@ -9,6 +9,14 @@ interface ServerListProps {
 }
 
 export const ServerList: Component<ServerListProps> = (props) => {
+  const getServerName = (server: Server): string => {
+    if (typeof server.name === 'string') {
+      return server.name;
+    }
+    // If name is an object or other type, return empty string
+    return '';
+  };
+
   return (
     <div class="server-list">
       <button
@@ -23,27 +31,30 @@ export const ServerList: Component<ServerListProps> = (props) => {
       <div class="server-separator" />
       
       <For each={props.servers}>
-        {(server) => (
-          <button
-            class="server-item"
-            classList={{ active: props.currentServer === server._id }}
-            onClick={() => props.onServerSelect(server._id)}
-            title={String(server.name || 'Server')}
-          >
-            {server.icon ? (
-              <img src={server.icon} alt={String(server.name || 'Server')} />
-            ) : (
-              <div class="server-acronym">
-                {String(server.name || '')
-                  .split(' ')
-                  .map((word) => word[0])
-                  .join('')
-                  .toUpperCase()
-                  .slice(0, 2)}
-              </div>
-            )}
-          </button>
-        )}
+        {(server) => {
+          const serverName = getServerName(server);
+          return (
+            <button
+              class="server-item"
+              classList={{ active: props.currentServer === server._id }}
+              onClick={() => props.onServerSelect(server._id)}
+              title={serverName || 'Server'}
+            >
+              {server.icon ? (
+                <img src={server.icon} alt={serverName || 'Server'} />
+              ) : (
+                <div class="server-acronym">
+                  {serverName
+                    .split(' ')
+                    .map((word) => word[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2) || '??'}
+                </div>
+              )}
+            </button>
+          );
+        }}
       </For>
       
       <button class="server-item add-server" onClick={props.onCreateServer} title="Add Server">
