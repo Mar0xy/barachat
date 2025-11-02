@@ -88,12 +88,19 @@ usersRouter.patch('/@me', authenticate, async (req: AuthRequest, res) => {
 
     const user = await db.users.findOne({ _id: req.userId });
     
-    // Broadcast user update to all connected clients (for status changes, etc.)
-    if (status !== undefined) {
+    // Broadcast user update to all connected clients (for status changes, display name, avatar, etc.)
+    if (user && (status !== undefined || displayName !== undefined || avatar !== undefined)) {
       broadcast({
         type: 'UserUpdate',
-        userId: req.userId,
-        status: status
+        user: {
+          _id: user._id,
+          username: user.username,
+          discriminator: user.discriminator,
+          displayName: user.displayName,
+          avatar: user.avatar,
+          status: user.status,
+          bio: user.bio
+        }
       });
     }
     

@@ -31,10 +31,35 @@ export function broadcastToUser(userId: string, event: any) {
   }
 }
 
-export function broadcastToChannel(channelId: string, event: any, excludeUserId?: string) {
+export async function broadcastToChannel(channelId: string, event: any, excludeUserId?: string) {
   const message = JSON.stringify(event);
+  
+  // Get channel to find recipients
+  const channel = await db.channels.findOne({ _id: channelId });
+  if (!channel) return;
+  
+  // Determine who should receive this message
+  let recipientIds: string[] = [];
+  
+  if (channel.channelType === 'DirectMessage' || channel.channelType === 'DM') {
+    // For DMs, send to all recipients
+    recipientIds = channel.recipients || [];
+  } else {
+    // For server channels, find all members of the server
+    const serverId = channel.server;
+    if (serverId) {
+      const members = await db.members.find({ '_id.server': serverId }).toArray();
+      recipientIds = members.map(m => m._id.user);
+    }
+  }
+  
+  // Broadcast to all clients for users who should receive this
   for (const client of clients.values()) {
-    if ((!excludeUserId || client.userId !== excludeUserId) && client.ws.readyState === WebSocket.OPEN) {
+    if (
+      recipientIds.includes(client.userId) &&
+      (!excludeUserId || client.userId !== excludeUserId) &&
+      client.ws.readyState === WebSocket.OPEN
+    ) {
       client.ws.send(message);
     }
   }

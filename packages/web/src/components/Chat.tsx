@@ -530,18 +530,20 @@ export const Chat: Component = () => {
       } else if (data.type === 'MessageDeleted') {
         setMessages(messages().filter(m => m._id !== data.messageId));
       } else if (data.type === 'UserUpdate') {
-        // Update members list when user status changes
-        setMembers(members().map(m => 
-          m._id === data.userId 
-            ? { ...m, status: data.status } 
-            : m
-        ));
-        // Also update friends list
-        setFriends(friends().map(f => 
-          f._id === data.userId 
-            ? { ...f, status: data.status } 
-            : f
-        ));
+        // Update members list when user info changes
+        if (data.user) {
+          setMembers(members().map(m => 
+            m._id === data.user._id 
+              ? { ...m, ...data.user } 
+              : m
+          ));
+          // Also update friends list
+          setFriends(friends().map(f => 
+            f._id === data.user._id 
+              ? { ...f, ...data.user } 
+              : f
+          ));
+        }
       } else if (data.type === 'Typing') {
         const channelTypers = typingUsers().get(data.channel) || new Set();
         channelTypers.add(data.username);
