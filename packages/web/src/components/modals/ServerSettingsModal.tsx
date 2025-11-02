@@ -277,8 +277,9 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
                   type="button" 
                   class="button-secondary"
                   onClick={() => {
-                    setShowInvites(!showInvites());
-                    if (!showInvites()) {
+                    const newShowState = !showInvites();
+                    setShowInvites(newShowState);
+                    if (newShowState) {
                       loadInvites();
                     }
                   }}

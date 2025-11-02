@@ -631,7 +631,10 @@ export const Chat: Component = () => {
       } else if (data.type === 'ChannelCreate') {
         // Add new channel to the list if it's for the current server
         if (data.channel && data.channel.server === currentServer()) {
-          setChannels([...channels(), data.channel]);
+          // Check if channel already exists to prevent duplicates
+          if (!channels().some(c => c._id === data.channel._id)) {
+            setChannels([...channels(), data.channel]);
+          }
         }
       } else if (data.type === 'ChannelUpdate') {
         // Update channel in the list
