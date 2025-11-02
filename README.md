@@ -42,20 +42,90 @@ Before getting started, ensure you have:
 
 ## Quick Start
 
-### 1. Clone the repository
+You can run Barachat in two ways: **Development Mode** (with hot-reload) or **Production Mode** (using Docker).
+
+### Production Mode (Docker - Recommended)
+
+This mode runs everything in Docker containers with a single command. All services are networked together, and only port 8080 is exposed.
+
+#### 1. Clone the repository
 
 ```bash
 git clone https://github.com/Mar0xy/barachat.git
 cd barachat
 ```
 
-### 2. Install dependencies
+#### 2. Set up environment (optional)
+
+```bash
+# Copy and customize environment file if needed
+cp .env.example .env
+# Edit .env to set JWT_SECRET and other variables
+```
+
+#### 3. Start all services with Docker Compose
+
+```bash
+docker compose up -d
+```
+
+This will:
+- Build and start the API server, WebSocket server, and web frontend
+- Start MongoDB and Redis (no external ports exposed)
+- Set up an internal network for all services
+- Expose only port 8080 through an nginx reverse proxy
+
+The application will be available at: **http://localhost:8080**
+
+- Frontend: `http://localhost:8080/`
+- API: `http://localhost:8080/api/`
+- WebSocket: `ws://localhost:8080/ws`
+
+#### 4. View logs
+
+```bash
+# View all logs
+docker compose logs -f
+
+# View specific service logs
+docker compose logs -f api
+docker compose logs -f websocket
+docker compose logs -f web
+```
+
+#### 5. Stop services
+
+```bash
+docker compose down
+
+# Or to remove volumes as well (deletes all data)
+docker compose down -v
+```
+
+### Development Mode (Local)
+
+This mode runs services locally with hot-reload for faster development iteration.
+
+#### Prerequisites
+- **Node.js** >= 18
+- **pnpm** >= 8 (run `corepack enable` to install)
+- **Docker** and **Docker Compose** (for databases)
+- **Git**
+
+#### 1. Clone the repository
+
+```bash
+git clone https://github.com/Mar0xy/barachat.git
+cd barachat
+```
+
+#### 2. Install dependencies
 
 ```bash
 pnpm install
 ```
 
-### 3. Set up environment
+#### 3. Set up environment
 
 ```bash
 # Copy environment files
@@ -63,16 +133,16 @@ cp .env.example .env
 cp packages/web/.env.example packages/web/.env
 
 # Start databases (MongoDB and Redis)
-docker compose up -d
+docker compose up -d mongodb redis
 ```
 
-### 4. Build dependencies
+#### 4. Build dependencies
 
 ```bash
 pnpm build:deps
 ```
 
-### 5. Start the development servers
+#### 5. Start the development servers
 
 **Option A: Use the start script (recommended)**
 
@@ -105,6 +175,12 @@ The application will be available at:
 
 ### Stopping Services
 
+**Docker Mode:**
+```bash
+docker compose down
+```
+
+**Development Mode:**
 When using the start script, simply press `Ctrl+C` and all services will be stopped automatically.
 
 If running services separately, press `Ctrl+C` in each terminal window.
