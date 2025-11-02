@@ -34,7 +34,7 @@ export const ServerList: Component<ServerListProps> = (props) => {
               <img src={server.icon} alt={server.name} />
             ) : (
               <div class="server-acronym">
-                {(server.name || '')
+                {String(server.name || '')
                   .split(' ')
                   .map((word) => word[0])
                   .join('')
