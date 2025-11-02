@@ -8,11 +8,11 @@ export const messagesRouter: ExpressRouter = Router();
 // Send message
 messagesRouter.post('/:channelId/messages', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { content, nonce } = req.body;
+    const { content, nonce, attachments } = req.body;
     const { channelId } = req.params;
 
-    if (!content) {
-      return res.status(400).json({ error: 'Content is required' });
+    if (!content && (!attachments || attachments.length === 0)) {
+      return res.status(400).json({ error: 'Content or attachments are required' });
     }
 
     const message = {
@@ -20,7 +20,8 @@ messagesRouter.post('/:channelId/messages', authenticate, async (req: AuthReques
       nonce,
       channel: channelId,
       author: req.userId!,
-      content
+      content: content || '',
+      attachments: attachments || []
     };
 
     await db.messages.insertOne(message as any);
@@ -89,6 +90,33 @@ messagesRouter.get('/:channelId/messages', authenticate, async (req: AuthRequest
     res.json(messagesWithAuthors.reverse());
   } catch (error) {
     console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete message
+messagesRouter.delete('/:channelId/messages/:messageId', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { channelId, messageId } = req.params;
+
+    // Find the message
+    const message = await db.messages.findOne({ _id: messageId, channel: channelId });
+
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    // Check if user is the author
+    if (message.author !== req.userId) {
+      return res.status(403).json({ error: 'You can only delete your own messages' });
+    }
+
+    // Delete the message
+    await db.messages.deleteOne({ _id: messageId });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting message:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

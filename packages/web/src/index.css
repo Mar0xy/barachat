@@ -312,13 +312,111 @@ body {
   word-wrap: break-word;
 }
 
+.message-delete {
+  background: transparent;
+  border: none;
+  color: #8e9297;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message:hover .message-delete {
+  opacity: 1;
+}
+
+.message-delete:hover {
+  color: #ed4245;
+}
+
+.message-attachments {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.message-image {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.message-image:hover {
+  opacity: 0.9;
+}
+
 .message-input {
   padding: 16px;
   background: #1e1e1e;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.attach-button {
+  width: 40px;
+  height: 40px;
+  background: #2a2a2a;
+  border: none;
+  border-radius: 8px;
+  color: #dcddde;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.attach-button:hover:not(:disabled) {
+  background: #303030;
+}
+
+.attach-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pending-attachments {
+  padding: 8px 16px;
+  background: #1e1e1e;
+  display: flex;
+  gap: 8px;
+}
+
+.pending-attachment {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.pending-attachment img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.pending-attachment button {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: #ed4245;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
 }
 
 .message-input form {
-  width: 100%;
+  flex: 1;
 }
 
 .message-input input {
@@ -339,6 +437,50 @@ body {
 .message-input input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Lightbox */
+.lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  cursor: pointer;
+}
+
+.lightbox-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  cursor: default;
+}
+
+.lightbox-content img {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 8px;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 40px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.lightbox-close:hover {
+  color: #ed4245;
 }
 
 /* Typing Indicator */

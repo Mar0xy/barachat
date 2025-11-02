@@ -76,3 +76,23 @@ uploadsRouter.post('/server-icon', authenticate, upload.single('icon'), async (r
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Upload message attachment
+uploadsRouter.post('/attachment', authenticate, upload.single('file'), async (req: AuthRequestWithFile, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const attachmentUrl = `/uploads/${req.file.filename}`;
+    res.json({ 
+      url: attachmentUrl,
+      filename: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    });
+  } catch (error) {
+    console.error('Error uploading attachment:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});

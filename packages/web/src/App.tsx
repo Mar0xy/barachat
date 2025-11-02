@@ -139,6 +139,10 @@ export const Chat: Component = () => {
   const [showCreateChannel, setShowCreateChannel] = createSignal(false);
   const [typingUsers, setTypingUsers] = createSignal<Map<string, Set<string>>>(new Map());
   const [typingTimeout, setTypingTimeout] = createSignal<number | null>(null);
+  const [lightboxImage, setLightboxImage] = createSignal<string | null>(null);
+  const [uploadingAttachment, setUploadingAttachment] = createSignal(false);
+  const [pendingAttachments, setPendingAttachments] = createSignal<string[]>([]);
+  let fileInputRef: HTMLInputElement | undefined;
   const navigate = useNavigate();
 
   // Fetch servers
@@ -300,7 +304,11 @@ export const Chat: Component = () => {
 
   const sendMessage = async (e: Event) => {
     e.preventDefault();
-    if (!messageInput().trim() || !currentChannel()) return;
+    const hasContent = messageInput().trim();
+    const hasAttachments = pendingAttachments().length > 0;
+    
+    if (!hasContent && !hasAttachments) return;
+    if (!currentChannel()) return;
 
     // Stop typing indicator when sending
     const websocket = ws();
@@ -319,11 +327,89 @@ export const Chat: Component = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ content: messageInput() })
+        body: JSON.stringify({ 
+          content: messageInput(),
+          attachments: pendingAttachments()
+        })
       });
 
       if (response.ok) {
         const message = await response.json();
+        setMessages([...messages(), message]);
+        setMessageInput('');
+        setPendingAttachments([]);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+  const handleFileAttachment = async (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    
+    // Check if it's an image
+    if (!file.type.startsWith('image/')) {
+      alert('Only image files are supported');
+      return;
+    }
+
+    setUploadingAttachment(true);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/upload/attachment`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPendingAttachments([...pendingAttachments(), data.url]);
+      } else {
+        alert('Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Error uploading image');
+    } finally {
+      setUploadingAttachment(false);
+      if (fileInputRef) {
+        fileInputRef.value = '';
+      }
+    }
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    if (!confirm('Are you sure you want to delete this message?')) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/channels/${currentChannel()}/messages/${messageId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setMessages(messages().filter(m => m._id !== messageId));
+      } else {
+        alert('Failed to delete message');
+      }
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      alert('Error deleting message');
+    }
+  };
         setMessages([...messages(), message]);
         setMessageInput('');
       }
@@ -488,8 +574,33 @@ export const Chat: Component = () => {
                   <div class="message-header">
                     <span class="message-author">{message.author?.displayName || message.author?.username || 'Unknown'}</span>
                     <span class="message-timestamp">{new Date().toLocaleTimeString()}</span>
+                    <Show when={message.author?._id === user()?._id}>
+                      <button 
+                        class="message-delete" 
+                        onClick={() => deleteMessage(message._id)}
+                        title="Delete message"
+                      >
+                        🗑️
+                      </button>
+                    </Show>
                   </div>
-                  <div class="message-content">{message.content}</div>
+                  <Show when={message.content}>
+                    <div class="message-content">{message.content}</div>
+                  </Show>
+                  <Show when={message.attachments && message.attachments.length > 0}>
+                    <div class="message-attachments">
+                      <For each={message.attachments}>
+                        {(attachment) => (
+                          <img 
+                            src={attachment} 
+                            alt="Attachment" 
+                            class="message-image"
+                            onClick={() => setLightboxImage(attachment)}
+                          />
+                        )}
+                      </For>
+                    </div>
+                  </Show>
                 </div>
               </div>
             )}
@@ -500,7 +611,34 @@ export const Chat: Component = () => {
             {getTypingIndicator()}
           </div>
         </Show>
+        <Show when={pendingAttachments().length > 0}>
+          <div class="pending-attachments">
+            <For each={pendingAttachments()}>
+              {(attachment, index) => (
+                <div class="pending-attachment">
+                  <img src={attachment} alt="Pending" />
+                  <button onClick={() => setPendingAttachments(pendingAttachments().filter((_, i) => i !== index()))}>×</button>
+                </div>
+              )}
+            </For>
+          </div>
+        </Show>
         <div class="message-input">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            style="display: none;"
+            onChange={handleFileAttachment}
+          />
+          <button 
+            class="attach-button" 
+            onClick={() => fileInputRef?.click()}
+            disabled={!currentChannel() || uploadingAttachment()}
+            title="Attach image"
+          >
+            {uploadingAttachment() ? '⏳' : '📎'}
+          </button>
           <form onSubmit={sendMessage}>
             <input
               type="text"
@@ -515,6 +653,16 @@ export const Chat: Component = () => {
           </form>
         </div>
       </div>
+
+      {/* Lightbox for image viewing */}
+      <Show when={lightboxImage()}>
+        <div class="lightbox" onClick={() => setLightboxImage(null)}>
+          <div class="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <button class="lightbox-close" onClick={() => setLightboxImage(null)}>×</button>
+            <img src={lightboxImage()!} alt="Full size" />
+          </div>
+        </div>
+      </Show>
 
       {/* Create Server Modal */}
       <Show when={showCreateServer()}>
