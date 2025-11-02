@@ -1,0 +1,20 @@
+{
+  "name": "@barachat/web",
+  "version": "0.1.0",
+  "description": "Web frontend for Barachat",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "solid-js": "^1.8.7",
+    "@solidjs/router": "^0.13.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.2",
+    "vite": "^5.0.8",
+    "vite-plugin-solid": "^2.8.2"
+  }
+}

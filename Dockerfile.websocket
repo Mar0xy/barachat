@@ -1,0 +1,56 @@
+# Build stage
+FROM node:20-alpine AS builder
+
+RUN corepack enable
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY packages/models/package.json ./packages/models/
+COPY packages/config/package.json ./packages/config/
+COPY packages/database/package.json ./packages/database/
+COPY packages/websocket/package.json ./packages/websocket/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source files
+COPY tsconfig.json ./
+COPY packages/models ./packages/models
+COPY packages/config ./packages/config
+COPY packages/database ./packages/database
+COPY packages/websocket ./packages/websocket
+
+# Build
+RUN pnpm --filter @barachat/models build && \
+    pnpm --filter @barachat/config build && \
+    pnpm --filter @barachat/database build && \
+    pnpm --filter @barachat/websocket build
+
+# Production stage
+FROM node:20-alpine
+
+RUN corepack enable
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY packages/models/package.json ./packages/models/
+COPY packages/config/package.json ./packages/config/
+COPY packages/database/package.json ./packages/database/
+COPY packages/websocket/package.json ./packages/websocket/
+
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
+
+# Copy built files from builder
+COPY --from=builder /app/packages/models/dist ./packages/models/dist
+COPY --from=builder /app/packages/config/dist ./packages/config/dist
+COPY --from=builder /app/packages/database/dist ./packages/database/dist
+COPY --from=builder /app/packages/websocket/dist ./packages/websocket/dist
+
+EXPOSE 3001
+
+CMD ["node", "packages/websocket/dist/index.js"]

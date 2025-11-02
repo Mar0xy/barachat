@@ -1,0 +1,32 @@
+{
+  "name": "barachat",
+  "version": "0.1.0",
+  "description": "TypeScript chat platform inspired by Revolt/Stoat",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "pnpm --filter @barachat/api dev",
+    "dev:ws": "pnpm --filter @barachat/websocket dev",
+    "dev:web": "pnpm --filter @barachat/web dev",
+    "build": "pnpm -r build",
+    "build:deps": "pnpm --filter @barachat/models build && pnpm --filter @barachat/config build && pnpm --filter @barachat/database build",
+    "lint": "eslint --ext .ts,.tsx packages",
+    "fmt": "prettier --write 'packages/**/*.{ts,tsx,json}'",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.2"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  },
+  "packageManager": "pnpm@8.12.0"
+}

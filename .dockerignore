@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+.git
+.github
+.vscode
+*.log
+.env
+.env.local
+.DS_Store
+coverage
+*.md
+!README.md
