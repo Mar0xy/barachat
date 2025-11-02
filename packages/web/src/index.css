@@ -1000,7 +1000,7 @@ body {
 }
 
 .message-input-container {
-  padding: 16px;
+  padding: 12px;
   background: #1e1e1e;
   display: flex;
   align-items: center;
@@ -2265,12 +2265,12 @@ body {
 }
 
 .gif-category-button {
-  padding: 6px 12px;
+  padding: 8px 16px;
   background: #2a2a2a;
   border: none;
   border-radius: 4px;
   color: #b9bbbe;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;

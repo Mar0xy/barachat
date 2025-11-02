@@ -19,6 +19,7 @@ interface ChatAreaProps {
   pendingAttachments: string[];
   onRemoveAttachment: (url: string) => void;
   onClearAttachments: () => void;
+  onAddAttachment?: (url: string) => void;
   uploadingAttachment: boolean;
   onAttachmentUpload: (files: FileList | null) => void;
   fileInputRef?: HTMLInputElement;
@@ -51,8 +52,10 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
   };
 
   const handleGifSelect = (gifUrl: string) => {
-    // Add GIF as attachment or in message
-    props.onMessageInputChange(props.messageInput + gifUrl + ' ');
+    // Add GIF as an attachment instead of in message text
+    if (props.onAddAttachment) {
+      props.onAddAttachment(gifUrl);
+    }
     setShowGifPicker(false);
   };
 
