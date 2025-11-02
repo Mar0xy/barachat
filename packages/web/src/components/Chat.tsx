@@ -686,6 +686,15 @@ export const Chat: Component = () => {
     }
   };
 
+  // Check if current user is the server owner
+  const isCurrentServerOwner = createMemo(() => {
+    const serverId = currentServer();
+    if (!serverId) return false;
+    
+    const server = servers().find(s => s._id === serverId);
+    return server?.owner === user()?._id;
+  });
+
   // Calculate message placeholder based on current channel
   const messagePlaceholder = createMemo(() => {
     const channel = currentChannel();
@@ -742,6 +751,7 @@ export const Chat: Component = () => {
           currentChannel={currentChannel()}
           currentServer={currentServer()}
           serverName={servers().find(s => s._id === currentServer())?.name}
+          isServerOwner={isCurrentServerOwner()}
           onChannelSelect={handleChannelSelect}
           onCreateChannel={() => setShowCreateChannel(true)}
           onServerSettings={() => setShowServerSettings(true)}
@@ -813,6 +823,7 @@ export const Chat: Component = () => {
       <Show when={showServerSettings() && currentServer()}>
         <ServerSettingsModal
           server={servers().find(s => s._id === currentServer())}
+          isOwner={isCurrentServerOwner()}
           onClose={() => setShowServerSettings(false)}
           onUpdate={(updatedServer) => {
             // Normalize server name

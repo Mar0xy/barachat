@@ -148,20 +148,15 @@ serversRouter.post('/:serverId/channels', authenticate, async (req: AuthRequest,
       return res.status(400).json({ error: 'Name is required' });
     }
 
-    // Check if user is server member
+    // Check if user is server owner
     const server = await db.servers.findOne({ _id: serverId });
     
     if (!server) {
       return res.status(404).json({ error: 'Server not found' });
     }
 
-    const member = await db.members.findOne({
-      '_id.server': serverId,
-      '_id.user': req.userId
-    });
-
-    if (!member) {
-      return res.status(403).json({ error: 'Forbidden: Not a server member' });
+    if (server.owner !== req.userId) {
+      return res.status(403).json({ error: 'Forbidden: Only server owner can create channels' });
     }
 
     const channelId = ulid();

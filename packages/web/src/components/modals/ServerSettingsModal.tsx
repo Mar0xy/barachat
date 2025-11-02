@@ -5,6 +5,7 @@ import { ImageCropper } from '../../ImageCropper';
 
 interface ServerSettingsModalProps {
   server: Server | undefined;
+  isOwner?: boolean;
   onClose: () => void;
   onUpdate: (server: Server) => void;
   onLeave?: () => void;
@@ -205,105 +206,118 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
         </div>
         <form onSubmit={handleSave}>
           <div class="modal-body">
-            <div class="settings-section">
-              <h3>Overview</h3>
-              <label>
-                Server Name
-                <input 
-                  type="text" 
-                  value={name()} 
-                  onInput={(e) => setName(e.currentTarget.value)}
-                  placeholder="Server Name"
-                />
-              </label>
-              <label>
-                Description
-                <textarea
-                  value={description()}
-                  onInput={(e) => setDescription(e.currentTarget.value)}
-                  placeholder="Server description"
-                  rows={3}
-                />
-              </label>
-              <label>
-                Server Icon
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  disabled={uploading()}
-                />
-                {uploading() && <p class="upload-status">Uploading...</p>}
-              </label>
-              <label>
-                Server Icon URL (or upload above)
-                <input
-                  type="text"
-                  value={icon()}
-                  onInput={(e) => setIcon(e.currentTarget.value)}
-                  placeholder="Enter icon image URL (e.g., https://...)"
-                />
-              </label>
-              <Show when={icon()}>
-                <div class="avatar-preview">
-                  <p>Icon Preview:</p>
-                  <img src={icon()} alt="Server icon preview" class="preview-image" />
-                </div>
-              </Show>
-              <label>
-                Server ID
-                <input type="text" value={props.server?._id || ''} disabled />
-              </label>
-            </div>
+            <Show when={props.isOwner} fallback={
+              <div class="settings-section">
+                <h3>Overview</h3>
+                <p>Only the server owner can modify server settings.</p>
+                <label>
+                  Server ID
+                  <input type="text" value={props.server?._id || ''} disabled />
+                </label>
+              </div>
+            }>
+              <div class="settings-section">
+                <h3>Overview</h3>
+                <label>
+                  Server Name
+                  <input 
+                    type="text" 
+                    value={name()} 
+                    onInput={(e) => setName(e.currentTarget.value)}
+                    placeholder="Server Name"
+                  />
+                </label>
+                <label>
+                  Description
+                  <textarea
+                    value={description()}
+                    onInput={(e) => setDescription(e.currentTarget.value)}
+                    placeholder="Server description"
+                    rows={3}
+                  />
+                </label>
+                <label>
+                  Server Icon
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    disabled={uploading()}
+                  />
+                  {uploading() && <p class="upload-status">Uploading...</p>}
+                </label>
+                <label>
+                  Server Icon URL (or upload above)
+                  <input
+                    type="text"
+                    value={icon()}
+                    onInput={(e) => setIcon(e.currentTarget.value)}
+                    placeholder="Enter icon image URL (e.g., https://...)"
+                  />
+                </label>
+                <Show when={icon()}>
+                  <div class="avatar-preview">
+                    <p>Icon Preview:</p>
+                    <img src={icon()} alt="Server icon preview" class="preview-image" />
+                  </div>
+                </Show>
+                <label>
+                  Server ID
+                  <input type="text" value={props.server?._id || ''} disabled />
+                </label>
+              </div>
+            </Show>
 
-            <div class="settings-section">
-              <h3>Invites</h3>
-              <button 
-                type="button" 
-                class="button-secondary"
-                onClick={() => {
-                  setShowInvites(!showInvites());
-                  if (!showInvites()) {
-                    loadInvites();
-                  }
-                }}
-              >
-                {showInvites() ? 'Hide Invites' : 'Show Invites'}
-              </button>
-              
-              <Show when={showInvites()}>
-                <div class="invites-list">
-                  <button 
-                    type="button" 
-                    class="button-primary" 
-                    onClick={createInvite}
-                    disabled={creatingInvite()}
-                  >
-                    {creatingInvite() ? 'Creating...' : 'Create Invite'}
-                  </button>
-                  
-                  <For each={invites()}>
-                    {(invite) => (
-                      <div class="invite-item">
-                        <code class="invite-code">{invite._id}</code>
-                        <span class="invite-uses">Uses: {invite.uses}/{invite.maxUses || '∞'}</span>
-                        <button 
-                          type="button"
-                          class="button-danger-small"
-                          onClick={() => deleteInvite(invite._id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </For>
-                  
-                  <Show when={invites().length === 0}>
-                    <p class="no-invites">No active invites</p>
-                  </Show>
-                </div>
-              </Show>
-            </div>
+            <Show when={props.isOwner}>
+              <div class="settings-section">
+                <h3>Invites</h3>
+                <button 
+                  type="button" 
+                  class="button-secondary"
+                  onClick={() => {
+                    setShowInvites(!showInvites());
+                    if (!showInvites()) {
+                      loadInvites();
+                    }
+                  }}
+                >
+                  {showInvites() ? 'Hide Invites' : 'Show Invites'}
+                </button>
+                
+                <Show when={showInvites()}>
+                  <div class="invites-list">
+                    <button 
+                      type="button" 
+                      class="button-primary" 
+                      onClick={createInvite}
+                      disabled={creatingInvite()}
+                    >
+                      {creatingInvite() ? 'Creating...' : 'Create Invite'}
+                    </button>
+                    
+                    <For each={invites()}>
+                      {(invite) => (
+                        <div class="invite-item">
+                          <code class="invite-code">{invite._id}</code>
+                          <span class="invite-uses">Uses: {invite.uses}/{invite.maxUses || '∞'}</span>
+                          <button 
+                            type="button"
+                            class="button-danger-small"
+                            onClick={() => deleteInvite(invite._id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </For>
+                    
+                    <Show when={invites().length === 0}>
+                      <p class="no-invites">No active invites</p>
+                    </Show>
+                  </div>
+                </Show>
+              </div>
+            </Show>
 
             <div class="settings-section danger-zone">
               <h3>Danger Zone</h3>
@@ -322,10 +336,14 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
-            <button type="submit" class="button-primary" disabled={saving()}>
-              {saving() ? 'Saving...' : 'Save Changes'}
+            <button type="button" class="button-secondary" onClick={props.onClose}>
+              {props.isOwner ? 'Cancel' : 'Close'}
             </button>
+            <Show when={props.isOwner}>
+              <button type="submit" class="button-primary" disabled={saving()}>
+                {saving() ? 'Saving...' : 'Save Changes'}
+              </button>
+            </Show>
           </div>
         </form>
         <Show when={cropImageUrl()}>

@@ -7,6 +7,7 @@ interface ChannelListProps {
   currentChannel: string;
   currentServer: string;
   serverName?: string;
+  isServerOwner?: boolean;
   onChannelSelect: (channelId: string) => void;
   onCreateChannel: () => void;
   onServerSettings: () => void;
@@ -19,7 +20,7 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
 
   const handleContextMenu = (e: MouseEvent, channel: Channel) => {
     e.preventDefault();
-    if (props.onEditChannel) {
+    if (props.onEditChannel && props.isServerOwner) {
       setContextMenu({ x: e.clientX, y: e.clientY, channel });
     }
   };
@@ -64,7 +65,7 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
       <div class="channels-section">
         <div class="section-header">
           <span>{props.currentServer ? 'TEXT CHANNELS' : 'DIRECT MESSAGES'}</span>
-          <Show when={props.currentServer}>
+          <Show when={props.currentServer && props.isServerOwner}>
             <button class="add-channel" onClick={props.onCreateChannel}>
               +
             </button>
