@@ -133,7 +133,7 @@ serversRouter.patch('/:serverId', authenticate, async (req: AuthRequest, res) =>
 serversRouter.post('/:serverId/channels', authenticate, async (req: AuthRequest, res) => {
   try {
     const { serverId } = req.params;
-    const { name, description } = req.body;
+    const { name, description, channelType, category } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Name is required' });
@@ -159,10 +159,11 @@ serversRouter.post('/:serverId/channels', authenticate, async (req: AuthRequest,
 
     const channel = {
       _id: channelId,
-      channelType: 'TextChannel',
+      channelType: channelType || 'TextChannel',
       server: serverId,
       name,
-      description
+      description,
+      ...(category && { category })
     };
 
     await db.channels.insertOne(channel as any);
@@ -230,7 +231,7 @@ serversRouter.get('/:serverId/members', authenticate, async (req: AuthRequest, r
     // Get presence status for each user
     const membersWithPresence = await Promise.all(
       members.map(async (member) => {
-        const userInfo = users.find(u => u._id === member.user);
+        const userInfo = users.find(u => u._id === member._id.user);
         const online = await db.getPresence(member._id.user);
         
         return {

@@ -1,5 +1,6 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import { db } from '@barachat/database';
+import { broadcast } from '@barachat/websocket';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
 export const usersRouter: ExpressRouter = Router();
@@ -16,6 +17,39 @@ usersRouter.get('/@me', authenticate, async (req: AuthRequest, res) => {
     res.json(user);
   } catch (error) {
     console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Search users
+usersRouter.get('/search', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const query = req.query.q as string;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter required' });
+    }
+
+    // Parse username#discriminator format or just username
+    const parts = query.split('#');
+    const username = parts[0];
+    const discriminator = parts[1];
+
+    const searchQuery: any = {
+      username: { $regex: username, $options: 'i' }
+    };
+
+    if (discriminator) {
+      searchQuery.discriminator = discriminator;
+    }
+
+    // Exclude the current user from search results
+    searchQuery._id = { $ne: req.userId };
+
+    const users = await db.users.find(searchQuery).limit(10).toArray();
+    res.json(users);
+  } catch (error) {
+    console.error('Error searching users:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -53,6 +87,23 @@ usersRouter.patch('/@me', authenticate, async (req: AuthRequest, res) => {
     );
 
     const user = await db.users.findOne({ _id: req.userId });
+    
+    // Broadcast user update to all connected clients (for status changes, display name, avatar, etc.)
+    if (user && (status !== undefined || displayName !== undefined || avatar !== undefined)) {
+      broadcast({
+        type: 'UserUpdate',
+        user: {
+          _id: user._id,
+          username: user.username,
+          discriminator: user.discriminator,
+          displayName: user.displayName,
+          avatar: user.avatar,
+          status: user.status,
+          bio: user.bio
+        }
+      });
+    }
+    
     res.json(user);
   } catch (error) {
     console.error('Error updating user:', error);

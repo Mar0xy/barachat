@@ -79,7 +79,8 @@ export enum ChannelType {
   DirectMessage = 'DirectMessage',
   Group = 'Group',
   TextChannel = 'TextChannel',
-  VoiceChannel = 'VoiceChannel'
+  VoiceChannel = 'VoiceChannel',
+  Category = 'Category'
 }
 
 export interface Channel {
@@ -95,6 +96,7 @@ export interface Channel {
   defaultPermissions?: Permission;
   lastMessageId?: string;
   server?: string;
+  category?: string; // Parent category ID for organizing channels
   nsfw?: boolean;
 }
 

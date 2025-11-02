@@ -12,6 +12,7 @@
     "@barachat/models": "workspace:*",
     "@barachat/config": "workspace:*",
     "@barachat/database": "workspace:*",
+    "@barachat/websocket": "workspace:*",
     "express": "^4.18.2",
     "cors": "^2.8.5",
     "jsonwebtoken": "^9.0.2",

@@ -1,10 +1,10 @@
-import { Component, createSignal, Show } from 'solid-js';
+import { Component, createSignal } from 'solid-js';
 import { Server } from '../../types';
 import { API_URL } from '../../utils/constants';
 
 interface CreateServerModalProps {
   onClose: () => void;
-  onCreate: (server: Server) => void;
+  onCreate: (name: string, description: string) => void;
 }
 
 export const CreateServerModal: Component<CreateServerModalProps> = (props) => {
@@ -15,28 +15,7 @@ export const CreateServerModal: Component<CreateServerModalProps> = (props) => {
     e.preventDefault();
     if (!name().trim()) return;
 
-    const token = localStorage.getItem('token');
-    try {
-      const response = await fetch(`${API_URL}/servers/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: name(),
-          description: description()
-        })
-      });
-
-      if (response.ok) {
-        const server = await response.json();
-        props.onCreate(server);
-        props.onClose();
-      }
-    } catch (error) {
-      console.error('Error creating server:', error);
-    }
+    props.onCreate(name(), description());
   };
 
   return (

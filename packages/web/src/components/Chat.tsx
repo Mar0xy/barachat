@@ -1,10 +1,13 @@
-import { Component, createSignal, Show, onMount, For, createEffect, batch } from 'solid-js';
+import { Component, createSignal, Show, onMount, createEffect } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { ImageCropper } from '../ImageCropper';
 import { CreateServerModal } from './modals/CreateServerModal';
 import { UserSettingsModal } from './modals/UserSettingsModal';
 import { ServerSettingsModal } from './modals/ServerSettingsModal';
 import { CreateChannelModal } from './modals/CreateChannelModal';
+import { EditChannelModal } from './modals/EditChannelModal';
+import { UserProfileModal } from './modals/UserProfileModal';
+import { FriendsList } from './FriendsList';
+import { MembersList } from './MembersList';
 import { User, Friend, Member, Server, Channel, Message } from '../types';
 import { API_URL, WS_URL } from '../utils/constants';
 import { ServerList } from './ServerList';
@@ -25,6 +28,7 @@ export const Chat: Component = () => {
   const [showUserSettings, setShowUserSettings] = createSignal(false);
   const [showServerSettings, setShowServerSettings] = createSignal(false);
   const [showCreateChannel, setShowCreateChannel] = createSignal(false);
+  const [editingChannel, setEditingChannel] = createSignal<Channel | null>(null);
   const [typingUsers, setTypingUsers] = createSignal<Map<string, Set<string>>>(new Map());
   const [typingTimeout, setTypingTimeout] = createSignal<number | null>(null);
   const [lightboxImage, setLightboxImage] = createSignal<string | null>(null);
@@ -36,9 +40,40 @@ export const Chat: Component = () => {
   const [members, setMembers] = createSignal<Member[]>([]);
   const [showUserProfile, setShowUserProfile] = createSignal<User | null>(null);
   const [serverChannelMemory, setServerChannelMemory] = createSignal<Record<string, string>>({});
+  const [dmChannels, setDmChannels] = createSignal<any[]>([]);
   
   let fileInputRef: HTMLInputElement | undefined;
   const navigate = useNavigate();
+
+  // Create or open DM channel
+  const createOrOpenDM = async (userId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/channels/create-dm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      if (response.ok) {
+        const dmChannel = await response.json();
+        // Switch to home (no server) and select the DM channel
+        setCurrentServer('');
+        setCurrentChannel(dmChannel._id);
+        // Reload DM channels to include the new one
+        await loadDMChannels();
+        // Load messages for the DM
+        loadMessages(dmChannel._id);
+        // Close any open modals
+        setShowUserProfile(null);
+      }
+    } catch (error) {
+      console.error('Error creating DM:', error);
+    }
+  };
 
   // Load user data
   const loadUser = async () => {
@@ -49,6 +84,10 @@ export const Chat: Component = () => {
       });
       if (response.ok) {
         const userData = await response.json();
+        // Set default status if not set
+        if (!userData.status) {
+          userData.status = { presence: 'Online', text: '' };
+        }
         setUser(userData);
       }
     } catch (error) {
@@ -65,10 +104,80 @@ export const Chat: Component = () => {
       });
       if (response.ok) {
         const serverList = await response.json();
-        setServers(serverList);
+        console.log('Servers loaded:', serverList);
+        // Normalize server names to ensure they're strings
+        const normalizedServers = serverList.map((server: Server) => ({
+          ...server,
+          name: typeof server.name === 'string' ? server.name : String(server.name || 'Unnamed Server')
+        }));
+        setServers(normalizedServers);
       }
     } catch (error) {
       console.error('Error loading servers:', error);
+    }
+  };
+
+  // Load friends
+  const loadFriends = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/users/@me/relationships`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const friendList = await response.json();
+        setFriends(friendList);
+      }
+    } catch (error) {
+      console.error('Error loading friends:', error);
+    }
+  };
+
+  // Load server members
+  const loadMembers = async (serverId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/${serverId}/members`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const memberList = await response.json();
+        setMembers(memberList);
+      }
+    } catch (error) {
+      console.error('Error loading members:', error);
+    }
+  };
+
+  // Load DM channels
+  const loadDMChannels = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/channels/dms/list`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const dmList = await response.json();
+        setDmChannels(dmList);
+      }
+    } catch (error) {
+      console.error('Error loading DM channels:', error);
+    }
+  };
+
+  // Load and show user profile
+  const loadUserProfile = async (userId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setShowUserProfile(userData);
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
     }
   };
 
@@ -82,6 +191,15 @@ export const Chat: Component = () => {
       if (response.ok) {
         const channelList = await response.json();
         setChannels(channelList);
+        
+        // Auto-select first channel if no channel is selected and no saved channel
+        const memory = serverChannelMemory();
+        if (!memory[serverId] && channelList.length > 0 && !currentChannel()) {
+          const firstTextChannel = channelList.find((c: Channel) => c.channelType === 'TextChannel');
+          if (firstTextChannel) {
+            handleChannelSelect(firstTextChannel._id);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading channels:', error);
@@ -125,6 +243,9 @@ export const Chat: Component = () => {
       });
 
       if (response.ok) {
+        const message = await response.json();
+        // Immediately add the message to the list
+        setMessages([...messages(), message]);
         setMessageInput('');
         setPendingAttachments([]);
       }
@@ -167,7 +288,13 @@ export const Chat: Component = () => {
 
       if (response.ok) {
         const server = await response.json();
-        setServers([...servers(), server]);
+        console.log('Server created:', server);
+        // Ensure name is a string
+        const normalizedServer = {
+          ...server,
+          name: typeof server.name === 'string' ? server.name : String(server.name || 'Unnamed Server')
+        };
+        setServers([...servers(), normalizedServer]);
         setShowCreateServer(false);
         setCurrentServer(server._id);
       }
@@ -177,27 +304,52 @@ export const Chat: Component = () => {
   };
 
   // Create channel
-  const createChannel = async (name: string) => {
+  const createChannel = (channel: Channel) => {
+    setChannels([...channels(), channel]);
+    setShowCreateChannel(false);
+  };
+
+  // Update channel
+  const updateChannel = async (channelId: string, name: string, category?: string) => {
     const token = localStorage.getItem('token');
-    const serverId = currentServer();
-    
     try {
-      const response = await fetch(`${API_URL}/servers/${serverId}/channels`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/channels/${channelId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ name, channelType: 'text' })
+        body: JSON.stringify({ name, category: category || null })
       });
 
       if (response.ok) {
-        const channel = await response.json();
-        setChannels([...channels(), channel]);
-        setShowCreateChannel(false);
+        const updatedChannel = await response.json();
+        setChannels(channels().map(c => c._id === channelId ? updatedChannel : c));
+        setEditingChannel(null);
       }
     } catch (error) {
-      console.error('Error creating channel:', error);
+      console.error('Error updating channel:', error);
+    }
+  };
+
+  // Delete channel
+  const deleteChannel = async (channelId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/channels/${channelId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        setChannels(channels().filter(c => c._id !== channelId));
+        if (currentChannel() === channelId) {
+          setCurrentChannel('');
+        }
+        setEditingChannel(null);
+      }
+    } catch (error) {
+      console.error('Error deleting channel:', error);
     }
   };
 
@@ -317,6 +469,17 @@ export const Chat: Component = () => {
     const serverId = currentServer();
     if (serverId) {
       loadChannels(serverId);
+      loadMembers(serverId);
+      // Restore last channel for this server
+      const memory = serverChannelMemory();
+      const lastChannel = memory[serverId];
+      if (lastChannel) {
+        setCurrentChannel(lastChannel);
+      }
+    } else {
+      // When switching to home, load DM channels and clear members
+      loadDMChannels();
+      setMembers([]);
     }
   });
 
@@ -339,6 +502,8 @@ export const Chat: Component = () => {
     setUser(JSON.parse(userStr));
     loadUser();
     loadServers();
+    loadFriends();
+    loadDMChannels();
 
     // Connect WebSocket
     const websocket = new WebSocket(WS_URL);
@@ -352,9 +517,33 @@ export const Chat: Component = () => {
       const data = JSON.parse(event.data);
       
       if (data.type === 'Message') {
-        setMessages([...messages(), data.message]);
+        // Add message if it's for the current channel and not already in the list
+        if (data.message.channel === currentChannel()) {
+          setMessages(prev => {
+            // Check if message already exists
+            if (prev.some(m => m._id === data.message._id)) {
+              return prev;
+            }
+            return [...prev, data.message];
+          });
+        }
       } else if (data.type === 'MessageDeleted') {
         setMessages(messages().filter(m => m._id !== data.messageId));
+      } else if (data.type === 'UserUpdate') {
+        // Update members list when user info changes
+        if (data.user) {
+          setMembers(members().map(m => 
+            m._id === data.user._id 
+              ? { ...m, ...data.user } 
+              : m
+          ));
+          // Also update friends list
+          setFriends(friends().map(f => 
+            f._id === data.user._id 
+              ? { ...f, ...data.user } 
+              : f
+          ));
+        }
       } else if (data.type === 'Typing') {
         const channelTypers = typingUsers().get(data.channel) || new Set();
         channelTypers.add(data.username);
@@ -411,6 +600,15 @@ export const Chat: Component = () => {
     return 'Multiple users are typing...';
   };
 
+  const handleChannelSelect = (channelId: string) => {
+    setCurrentChannel(channelId);
+    // Save channel selection to memory for current server
+    const serverId = currentServer();
+    if (serverId) {
+      setServerChannelMemory({ ...serverChannelMemory(), [serverId]: channelId });
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -424,43 +622,66 @@ export const Chat: Component = () => {
         currentServer={currentServer()}
         onServerSelect={(serverId) => setCurrentServer(serverId)}
         onCreateServer={() => setShowCreateServer(true)}
+        onHomeClick={() => setCurrentChannel('')}
       />
       
-      <ChannelList
-        channels={channels()}
-        currentChannel={currentChannel()}
-        currentServer={currentServer()}
-        onChannelSelect={(channelId) => setCurrentChannel(channelId)}
-        onCreateChannel={() => setShowCreateChannel(true)}
-        onServerSettings={() => setShowServerSettings(true)}
-      />
+      <div class="sidebar">
+        <ChannelList
+          channels={currentServer() ? channels() : []}
+          dmChannels={dmChannels()}
+          currentChannel={currentChannel()}
+          currentServer={currentServer()}
+          serverName={servers().find(s => s._id === currentServer())?.name}
+          onChannelSelect={handleChannelSelect}
+          onCreateChannel={() => setShowCreateChannel(true)}
+          onServerSettings={() => setShowServerSettings(true)}
+          onEditChannel={(channel) => setEditingChannel(channel)}
+        />
+        
+        <UserPanel
+          user={user()}
+          onSettingsClick={() => setShowUserSettings(true)}
+          onLogout={logout}
+        />
+      </div>
       
-      <ChatArea
-        messages={messages()}
-        currentChannel={currentChannel()}
-        messageInput={messageInput()}
-        onMessageInputChange={setMessageInput}
-        onSendMessage={sendMessage}
-        onDeleteMessage={deleteMessage}
-        onTyping={handleTyping}
-        user={user()}
-        typingText={typingText()}
-        lightboxImage={lightboxImage()}
-        onLightboxClose={() => setLightboxImage(null)}
-        onImageClick={(url) => setLightboxImage(url)}
-        pendingAttachments={pendingAttachments()}
-        onRemoveAttachment={removePendingAttachment}
-        onClearAttachments={() => setPendingAttachments([])}
-        uploadingAttachment={uploadingAttachment()}
-        onAttachmentUpload={handleAttachmentUpload}
-        fileInputRef={fileInputRef}
-      />
-      
-      <UserPanel
-        user={user()}
-        onSettingsClick={() => setShowUserSettings(true)}
-        onLogout={logout}
-      />
+      <Show when={!currentServer() && !currentChannel()} fallback={
+        <>
+          <ChatArea
+            messages={messages()}
+            currentChannel={currentChannel()}
+            messageInput={messageInput()}
+            onMessageInputChange={setMessageInput}
+            onSendMessage={sendMessage}
+            onDeleteMessage={deleteMessage}
+            onTyping={handleTyping}
+            user={user()}
+            typingText={typingText}
+            lightboxImage={lightboxImage}
+            onLightboxClose={() => setLightboxImage(null)}
+            onImageClick={(url) => setLightboxImage(url)}
+            pendingAttachments={pendingAttachments()}
+            onRemoveAttachment={removePendingAttachment}
+            onClearAttachments={() => setPendingAttachments([])}
+            uploadingAttachment={uploadingAttachment()}
+            onAttachmentUpload={handleAttachmentUpload}
+            fileInputRef={fileInputRef}
+          />
+          <Show when={currentServer()}>
+            <MembersList
+              members={members()}
+              onMemberClick={loadUserProfile}
+            />
+          </Show>
+        </>
+      }>
+        <FriendsList
+          friends={friends()}
+          onUserProfileClick={loadUserProfile}
+          onRefresh={loadFriends}
+          onSendDM={createOrOpenDM}
+        />
+      </Show>
       
       <Show when={showCreateServer()}>
         <CreateServerModal
@@ -481,14 +702,44 @@ export const Chat: Component = () => {
         <ServerSettingsModal
           server={servers().find(s => s._id === currentServer())}
           onClose={() => setShowServerSettings(false)}
-          onUpdate={(updates) => updateServer(currentServer(), updates)}
+          onUpdate={(updatedServer) => {
+            // Normalize server name
+            const normalizedServer = {
+              ...updatedServer,
+              name: typeof updatedServer.name === 'string' ? updatedServer.name : String(updatedServer.name || 'Unnamed Server')
+            };
+            setServers(servers().map(s => s._id === normalizedServer._id ? normalizedServer : s));
+          }}
         />
       </Show>
       
       <Show when={showCreateChannel()}>
         <CreateChannelModal
+          serverId={currentServer()}
+          categories={channels().filter(c => c.channelType === 'Category')}
           onClose={() => setShowCreateChannel(false)}
           onCreate={createChannel}
+        />
+      </Show>
+      
+      <Show when={editingChannel()}>
+        <EditChannelModal
+          channel={editingChannel()!}
+          categories={channels().filter(c => c.channelType === 'Category')}
+          onClose={() => setEditingChannel(null)}
+          onUpdate={updateChannel}
+          onDelete={deleteChannel}
+        />
+      </Show>
+      
+      <Show when={showUserProfile()}>
+        <UserProfileModal
+          user={showUserProfile()}
+          currentUser={user()}
+          friends={friends()}
+          onClose={() => setShowUserProfile(null)}
+          onRefresh={loadFriends}
+          onSendDM={createOrOpenDM}
         />
       </Show>
     </div>

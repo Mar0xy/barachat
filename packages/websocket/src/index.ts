@@ -12,6 +12,59 @@ interface Client {
 
 const clients = new Map<string, Client>();
 
+// Export broadcast functions for use by API
+export function broadcast(event: any, excludeSessionId?: string) {
+  const message = JSON.stringify(event);
+  for (const [sessionId, client] of clients) {
+    if (sessionId !== excludeSessionId && client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(message);
+    }
+  }
+}
+
+export function broadcastToUser(userId: string, event: any) {
+  const message = JSON.stringify(event);
+  for (const client of clients.values()) {
+    if (client.userId === userId && client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(message);
+    }
+  }
+}
+
+export async function broadcastToChannel(channelId: string, event: any, excludeUserId?: string) {
+  const message = JSON.stringify(event);
+  
+  // Get channel to find recipients
+  const channel = await db.channels.findOne({ _id: channelId });
+  if (!channel) return;
+  
+  // Determine who should receive this message
+  let recipientIds: string[] = [];
+  
+  if (channel.channelType === 'DirectMessage') {
+    // For DMs, send to all recipients
+    recipientIds = channel.recipients || [];
+  } else {
+    // For server channels, find all members of the server
+    const serverId = channel.server;
+    if (serverId) {
+      const members = await db.members.find({ '_id.server': serverId }).toArray();
+      recipientIds = members.map(m => m._id.user);
+    }
+  }
+  
+  // Broadcast to all clients for users who should receive this
+  for (const client of clients.values()) {
+    if (
+      recipientIds.includes(client.userId) &&
+      (!excludeUserId || client.userId !== excludeUserId) &&
+      client.ws.readyState === WebSocket.OPEN
+    ) {
+      client.ws.send(message);
+    }
+  }
+}
+
 async function handleConnection(ws: WebSocket) {
   let client: Client | null = null;
 
@@ -82,23 +135,21 @@ async function handleConnection(ws: WebSocket) {
         }
       } else if (message.type === 'Ping') {
         ws.send(JSON.stringify({ type: EventType.Pong }));
-      } else if (message.type === 'BeginTyping') {
+      } else if (message.type === 'BeginTyping' || message.type === 'Typing') {
         if (client) {
           const user = await db.users.findOne({ _id: client.userId });
           broadcast({
-            type: EventType.ChannelStartTyping,
-            id: message.channel,
-            user: client.userId,
+            type: 'Typing',
+            channel: message.channel,
             username: user?.displayName || user?.username
           }, client.sessionId);
         }
-      } else if (message.type === 'EndTyping') {
+      } else if (message.type === 'EndTyping' || message.type === 'StopTyping') {
         if (client) {
           const user = await db.users.findOne({ _id: client.userId });
           broadcast({
-            type: EventType.ChannelStopTyping,
-            id: message.channel,
-            user: client.userId,
+            type: 'StopTyping',
+            channel: message.channel,
             username: user?.displayName || user?.username
           }, client.sessionId);
         }
@@ -140,29 +191,6 @@ async function getServerChannels(userId: string): Promise<string[]> {
   return servers.flatMap(s => s.channels);
 }
 
-function broadcast(event: any, excludeSessionId?: string) {
-  const message = JSON.stringify(event);
-  for (const [sessionId, client] of clients) {
-    if (sessionId !== excludeSessionId && client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(message);
-    }
-  }
-}
-
-export function broadcastToUser(userId: string, event: any) {
-  const message = JSON.stringify(event);
-  for (const client of clients.values()) {
-    if (client.userId === userId && client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(message);
-    }
-  }
-}
-
-export function broadcastToChannel(channelId: string, event: any, excludeUserId?: string) {
-  // This is simplified - in production, you'd want to check channel membership
-  broadcast(event);
-}
-
 async function start() {
   try {
     await db.connect();
@@ -181,4 +209,7 @@ async function start() {
   }
 }
 
-start();
+// Only start if this is the main module
+if (require.main === module) {
+  start();
+}

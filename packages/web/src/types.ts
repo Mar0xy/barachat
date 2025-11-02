@@ -21,7 +21,11 @@ export interface Friend {
   displayName?: string;
   avatar?: string;
   online?: boolean;
-  relationshipStatus: 'pending' | 'accepted' | 'blocked';
+  status?: {
+    text?: string;
+    presence?: 'Online' | 'Idle' | 'Busy' | 'Invisible';
+  };
+  relationshipStatus: 'Outgoing' | 'Incoming' | 'Friend';
 }
 
 export interface Member {

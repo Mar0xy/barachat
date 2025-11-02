@@ -11,6 +11,9 @@ interface UserSettingsModalProps {
 
 export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
   const [displayName, setDisplayName] = createSignal(props.user?.displayName || '');
+  const [bio, setBio] = createSignal(props.user?.bio || '');
+  const [statusText, setStatusText] = createSignal(props.user?.status?.text || '');
+  const [presence, setPresence] = createSignal(props.user?.status?.presence || 'Online');
   const [avatar, setAvatar] = createSignal(props.user?.avatar || '');
   const [saving, setSaving] = createSignal(false);
   const [uploading, setUploading] = createSignal(false);
@@ -78,6 +81,11 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
         },
         body: JSON.stringify({ 
           displayName: displayName(),
+          bio: bio(),
+          status: {
+            text: statusText(),
+            presence: presence()
+          },
           avatar: avatar()
         })
       });
@@ -123,7 +131,57 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
                 />
               </label>
               <label>
-                Avatar
+                Bio
+                <textarea
+                  value={bio()}
+                  onInput={(e) => setBio(e.currentTarget.value)}
+                  placeholder="Tell us about yourself..."
+                  rows={3}
+                  maxLength={190}
+                />
+              </label>
+            </div>
+
+            <div class="settings-section">
+              <h3>Status</h3>
+              <label>
+                Presence
+                <select
+                  value={presence()}
+                  onChange={(e) => setPresence(e.currentTarget.value as any)}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px', 
+                    'margin-top': '8px',
+                    background: '#2a2a2a',
+                    border: '1px solid #2a2a2a',
+                    'border-radius': '4px',
+                    color: '#fff',
+                    'font-size': '15px'
+                  }}
+                >
+                  <option value="Online">🟢 Online</option>
+                  <option value="Idle">🟡 Idle</option>
+                  <option value="Busy">🔴 Do Not Disturb</option>
+                  <option value="Invisible">⚫ Invisible</option>
+                </select>
+              </label>
+              <label>
+                Custom Status
+                <input
+                  type="text"
+                  value={statusText()}
+                  onInput={(e) => setStatusText(e.currentTarget.value)}
+                  placeholder="What's happening?"
+                  maxLength={128}
+                />
+              </label>
+            </div>
+
+            <div class="settings-section">
+              <h3>Avatar</h3>
+              <label>
+                Upload Avatar
                 <input
                   type="file"
                   accept="image/*"

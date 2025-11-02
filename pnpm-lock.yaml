@@ -38,6 +38,9 @@ importers:
       '@barachat/models':
         specifier: workspace:*
         version: link:../models
+      '@barachat/websocket':
+        specifier: workspace:*
+        version: link:../websocket
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1
