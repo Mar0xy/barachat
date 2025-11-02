@@ -2,6 +2,46 @@
 
 This document provides additional information about deploying Barachat using Docker.
 
+## Docker Image Options
+
+Barachat provides two ways to use Docker images:
+
+1. **Pre-built images from GitHub Container Registry (GHCR)** - Recommended for most users
+2. **Build images locally** - For development or customization
+
+### Using Pre-built Images (Default)
+
+The `docker-compose.yml` is configured to use pre-built images from GitHub Container Registry by default. These images are automatically built and published on every push to the main branch.
+
+Images are available at:
+- `ghcr.io/mar0xy/barachat-api:latest`
+- `ghcr.io/mar0xy/barachat-websocket:latest`
+- `ghcr.io/mar0xy/barachat-web:latest`
+
+To use pre-built images, simply run:
+```bash
+docker compose up -d
+```
+
+### Building Images Locally
+
+If you want to build images locally (e.g., for development or if you've made local changes), uncomment the `build` sections in `docker-compose.yml` and comment out the `image` lines:
+
+```yaml
+api:
+  # Use pre-built image from GitHub Container Registry
+  # image: ghcr.io/mar0xy/barachat-api:latest
+  # Uncomment below to build locally instead:
+  build:
+    context: .
+    dockerfile: Dockerfile.api
+```
+
+Then build and start:
+```bash
+docker compose up -d --build
+```
+
 ## Architecture
 
 The Docker Compose setup uses the following architecture:
@@ -90,7 +130,10 @@ Other environment variables are set automatically in `docker-compose.yml`.
 
 ## Building and Running
 
-### First Time Setup
+### Quick Start with Pre-built Images
+
+The easiest way to get started is using the pre-built images from GitHub Container Registry:
+
 ```bash
 # Clone the repository
 git clone https://github.com/Mar0xy/barachat.git
@@ -99,7 +142,50 @@ cd barachat
 # (Optional) Create .env file
 echo "JWT_SECRET=$(openssl rand -hex 32)" > .env
 
+# Pull and start all services
+docker compose up -d
+```
+
+The images will be automatically pulled from GHCR on first run.
+
+### Building Images Locally
+
+If you want to build images locally:
+
+```bash
+# Clone the repository
+git clone https://github.com/Mar0xy/barachat.git
+cd barachat
+
+# Edit docker-compose.yml to use build instead of image
+# (See "Building Images Locally" section above)
+
 # Build and start all services
+docker compose up -d --build
+```
+
+### Rebuilding After Code Changes
+### Rebuilding After Code Changes
+
+When using local builds (with `build:` configuration uncommented):
+
+```bash
+# Rebuild all services
+docker compose build
+
+# Rebuild specific service
+docker compose build api
+
+# Rebuild and restart
+docker compose up -d --build
+```
+
+When using pre-built images, pull the latest versions:
+```bash
+# Pull latest images from GHCR
+docker compose pull
+
+# Restart with updated images
 docker compose up -d
 ```
 
@@ -113,18 +199,6 @@ docker compose logs -f api
 docker compose logs -f websocket
 docker compose logs -f web
 docker compose logs -f nginx
-```
-
-### Rebuilding After Code Changes
-```bash
-# Rebuild all services
-docker compose build
-
-# Rebuild specific service
-docker compose build api
-
-# Rebuild and restart
-docker compose up -d --build
 ```
 
 ### Stopping Services
