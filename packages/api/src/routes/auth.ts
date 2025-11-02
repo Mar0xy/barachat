@@ -48,7 +48,7 @@ authRouter.post('/register', async (req, res) => {
     const token = jwt.sign({ userId }, config.jwtSecret, { expiresIn: '7d' });
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
 
     res.json({
       token,
@@ -108,7 +108,7 @@ authRouter.post('/login', async (req, res) => {
     });
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password2, ...userWithoutPassword } = user;
 
     res.json({
       token,

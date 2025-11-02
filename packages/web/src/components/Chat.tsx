@@ -405,28 +405,6 @@ export const Chat: Component = () => {
     }
   };
 
-  // Update server
-  const updateServer = async (serverId: string, updates: Partial<Server>) => {
-    const token = localStorage.getItem('token');
-    try {
-      const response = await fetch(`${API_URL}/servers/${serverId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(updates)
-      });
-
-      if (response.ok) {
-        const updatedServer = await response.json();
-        setServers(servers().map(s => s._id === serverId ? updatedServer : s));
-      }
-    } catch (error) {
-      console.error('Error updating server:', error);
-    }
-  };
-
   // Handle attachment upload
   const handleAttachmentUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;

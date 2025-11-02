@@ -250,9 +250,8 @@ async function start() {
             channel: event.channel
           });
         } else if (event.type === EventType.UserUpdate && event.id) {
-          // Broadcast user update to relevant users (friends and server members)
-          // For now, broadcast to all as we need to query relationships
-          // TODO: Optimize to only send to friends and server members
+          // Broadcast user update to all connected users
+          // Note: In the future, this could be optimized to only send to friends and server members
           broadcast({
             type: event.type,
             id: event.id,
