@@ -527,22 +527,44 @@ export const Chat: Component = () => {
             return [...prev, data.message];
           });
         }
-      } else if (data.type === 'MessageDeleted') {
-        setMessages(messages().filter(m => m._id !== data.messageId));
+      } else if (data.type === 'MessageDelete') {
+        setMessages(messages().filter(m => m._id !== data.id));
       } else if (data.type === 'UserUpdate') {
-        // Update members list when user info changes
-        if (data.user) {
+        // Update user info when it changes
+        if (data.id && data.data) {
+          // Update current user if it's them
+          const currentUser = user();
+          if (currentUser && currentUser._id === data.id) {
+            setUser({ ...currentUser, ...data.data });
+          }
+          
+          // Update members list
           setMembers(members().map(m => 
-            m._id === data.user._id 
-              ? { ...m, ...data.user } 
+            m._id === data.id 
+              ? { ...m, ...data.data } 
               : m
           ));
-          // Also update friends list
+          
+          // Update friends list
           setFriends(friends().map(f => 
-            f._id === data.user._id 
-              ? { ...f, ...data.user } 
+            f._id === data.id 
+              ? { ...f, ...data.data } 
               : f
           ));
+          
+          // Update DM channels recipient info
+          setDmChannels(dmChannels().map(dm => {
+            if (dm.recipient && dm.recipient._id === data.id) {
+              return { ...dm, recipient: { ...dm.recipient, ...data.data } };
+            }
+            return dm;
+          }));
+          
+          // Update user profile modal if it's open for this user
+          const profileUser = showUserProfile();
+          if (profileUser && profileUser._id === data.id) {
+            setShowUserProfile({ ...profileUser, ...data.data });
+          }
         }
       } else if (data.type === 'Typing') {
         const channelTypers = typingUsers().get(data.channel) || new Set();
