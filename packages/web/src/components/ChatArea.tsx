@@ -1,5 +1,7 @@
-import { Component, For, Show, createEffect } from 'solid-js';
+import { Component, For, Show, createEffect, createSignal } from 'solid-js';
 import { Message, User } from '../types';
+import { GifPicker } from './pickers/GifPicker';
+import { EmojiPicker } from './pickers/EmojiPicker';
 
 interface ChatAreaProps {
   messages: Message[];
@@ -27,6 +29,8 @@ interface ChatAreaProps {
 
 export const ChatArea: Component<ChatAreaProps> = (props) => {
   let messagesEndRef: HTMLDivElement | undefined;
+  const [showGifPicker, setShowGifPicker] = createSignal(false);
+  const [showEmojiPicker, setShowEmojiPicker] = createSignal(false);
 
   createEffect(() => {
     if (messagesEndRef) {
@@ -44,6 +48,18 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleGifSelect = (gifUrl: string) => {
+    // Add GIF as attachment or in message
+    props.onMessageInputChange(props.messageInput + gifUrl + ' ');
+    setShowGifPicker(false);
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    // Insert emoji at cursor position or append to end
+    props.onMessageInputChange(props.messageInput + emoji);
+    setShowEmojiPicker(false);
   };
 
   return (
@@ -159,14 +175,30 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
             accept="image/*"
             onChange={(e) => props.onAttachmentUpload(e.target.files)}
           />
-          <button
-            class="attach-button"
-            onClick={() => props.fileInputRef?.click()}
-            disabled={props.uploadingAttachment}
-            title="Attach image"
-          >
-            {props.uploadingAttachment ? '⏳' : '📎'}
-          </button>
+          <div class="picker-buttons">
+            <button
+              class="attach-button"
+              onClick={() => props.fileInputRef?.click()}
+              disabled={props.uploadingAttachment}
+              title="Attach image"
+            >
+              {props.uploadingAttachment ? '⏳' : '📎'}
+            </button>
+            <button
+              class="picker-button"
+              onClick={() => setShowGifPicker(true)}
+              title="Choose a GIF"
+            >
+              GIF
+            </button>
+            <button
+              class="picker-button"
+              onClick={() => setShowEmojiPicker(true)}
+              title="Choose an emoji"
+            >
+              😀
+            </button>
+          </div>
           <textarea
             class="message-input"
             placeholder={props.messagePlaceholder || 'Message #general'}
@@ -176,6 +208,14 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
             onKeyPress={props.onTyping}
           />
         </div>
+      </Show>
+
+      <Show when={showGifPicker()}>
+        <GifPicker onSelectGif={handleGifSelect} onClose={() => setShowGifPicker(false)} />
+      </Show>
+
+      <Show when={showEmojiPicker()}>
+        <EmojiPicker onSelectEmoji={handleEmojiSelect} onClose={() => setShowEmojiPicker(false)} />
       </Show>
 
       <Show when={props.lightboxImage()}>
