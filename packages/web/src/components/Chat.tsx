@@ -349,11 +349,23 @@ export const Chat: Component = () => {
     }
   };
 
-  // Delete channel
-  const deleteChannel = async (channelId: string) => {
+  // Delete channel or category
+  const deleteChannel = async (channelId: string, deleteChannels?: boolean) => {
     const token = localStorage.getItem('token');
+    const channel = channels().find(c => c._id === channelId);
+    
     try {
-      const response = await fetch(`${API_URL}/channels/${channelId}`, {
+      let url = `${API_URL}/channels/${channelId}`;
+      
+      // If deleting a category, use the category deletion endpoint
+      if (channel?.channelType === 'Category' && currentServer()) {
+        url = `${API_URL}/servers/${currentServer()}/categories/${channelId}`;
+        if (deleteChannels !== undefined) {
+          url += `?deleteChannels=${deleteChannels}`;
+        }
+      }
+      
+      const response = await fetch(url, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

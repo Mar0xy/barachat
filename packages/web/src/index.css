@@ -1277,6 +1277,15 @@ body {
   color: #fff;
 }
 
+.context-menu-item-danger {
+  color: #ed4245;
+}
+
+.context-menu-item-danger:hover {
+  background: #ed4245;
+  color: #fff;
+}
+
 /* Button Variants */
 .button-danger {
   background-color: #ed4245;

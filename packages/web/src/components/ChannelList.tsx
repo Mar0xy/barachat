@@ -24,6 +24,14 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
       setContextMenu({ x: e.clientX, y: e.clientY, channel });
     }
   };
+  
+  const handleCategoryContextMenu = (e: MouseEvent, category: Channel) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (props.onEditChannel && props.isServerOwner) {
+      setContextMenu({ x: e.clientX, y: e.clientY, channel: category });
+    }
+  };
 
   const handleCloseContextMenu = () => {
     setContextMenu(null);
@@ -77,7 +85,11 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
           <For each={organizedChannels().categories}>
             {(category) => (
               <div class="channel-category-group">
-                <div class="category-header" onClick={() => toggleCategory(category._id)}>
+                <div 
+                  class="category-header" 
+                  onClick={() => toggleCategory(category._id)}
+                  onContextMenu={(e) => handleCategoryContextMenu(e, category)}
+                >
                   <span class="category-arrow">
                     {collapsedCategories().has(category._id) ? '▶' : '▼'}
                   </span>
@@ -152,7 +164,19 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
                 handleCloseContextMenu();
               }}
             >
-              ✏️ Edit Channel
+              ✏️ Edit {contextMenu()!.channel.channelType === 'Category' ? 'Category' : 'Channel'}
+            </button>
+            <button 
+              class="context-menu-item context-menu-item-danger"
+              onClick={() => {
+                if (props.onEditChannel) {
+                  // Pass delete action by setting a special flag
+                  props.onEditChannel({ ...contextMenu()!.channel, _delete: true } as any);
+                }
+                handleCloseContextMenu();
+              }}
+            >
+              🗑️ Delete {contextMenu()!.channel.channelType === 'Category' ? 'Category' : 'Channel'}
             </button>
           </div>
         </div>
