@@ -42,6 +42,10 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
     }
   };
 
+  // Create invite with custom max uses
+  const [inviteMaxUses, setInviteMaxUses] = createSignal(0);
+  const [showInviteOptions, setShowInviteOptions] = createSignal(false);
+
   // Create invite
   const createInvite = async () => {
     if (!props.server) return;
@@ -56,13 +60,15 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          maxUses: 0,  // Unlimited uses
+          maxUses: inviteMaxUses(),
           expiresIn: 604800  // 7 days
         })
       });
       
       if (response.ok) {
         await loadInvites();
+        setShowInviteOptions(false);
+        setInviteMaxUses(0);
       }
     } catch (error) {
       console.error('Error creating invite:', error);
@@ -289,20 +295,65 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
                 
                 <Show when={showInvites()}>
                   <div class="invites-list">
-                    <button 
-                      type="button" 
-                      class="button-primary" 
-                      onClick={createInvite}
-                      disabled={creatingInvite()}
-                    >
-                      {creatingInvite() ? 'Creating...' : 'Create Invite'}
-                    </button>
+                    <Show when={!showInviteOptions()}>
+                      <button 
+                        type="button" 
+                        class="button-primary" 
+                        onClick={() => setShowInviteOptions(true)}
+                      >
+                        Create Invite
+                      </button>
+                    </Show>
+                    
+                    <Show when={showInviteOptions()}>
+                      <div class="invite-create-form">
+                        <label>
+                          Max Uses (0 = unlimited)
+                          <input
+                            type="number"
+                            min="0"
+                            value={inviteMaxUses()}
+                            onInput={(e) => setInviteMaxUses(parseInt(e.currentTarget.value) || 0)}
+                            placeholder="0"
+                          />
+                        </label>
+                        <div class="invite-form-actions">
+                          <button 
+                            type="button" 
+                            class="button-primary" 
+                            onClick={createInvite}
+                            disabled={creatingInvite()}
+                          >
+                            {creatingInvite() ? 'Creating...' : 'Create'}
+                          </button>
+                          <button 
+                            type="button" 
+                            class="button-secondary"
+                            onClick={() => {
+                              setShowInviteOptions(false);
+                              setInviteMaxUses(0);
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </Show>
                     
                     <For each={invites()}>
                       {(invite) => (
                         <div class="invite-item">
-                          <code class="invite-code">{invite._id}</code>
-                          <span class="invite-uses">Uses: {invite.uses}/{invite.maxUses || '∞'}</span>
+                          <div class="invite-info">
+                            <code class="invite-code">{invite._id}</code>
+                            <span class="invite-meta">
+                              Uses: {invite.uses}/{invite.maxUses || '∞'}
+                              {invite.expiresAt && (
+                                <span class="invite-expires">
+                                  {' • Expires: ' + new Date(invite.expiresAt).toLocaleDateString()}
+                                </span>
+                              )}
+                            </span>
+                          </div>
                           <button 
                             type="button"
                             class="button-danger-small"
@@ -314,8 +365,8 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
                       )}
                     </For>
                     
-                    <Show when={invites().length === 0}>
-                      <p class="no-invites">No active invites</p>
+                    <Show when={invites().length === 0 && !showInviteOptions()}>
+                      <p class="no-invites">No active invites. Create one to invite users!</p>
                     </Show>
                   </div>
                 </Show>

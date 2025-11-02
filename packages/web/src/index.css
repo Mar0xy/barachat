@@ -2038,3 +2038,117 @@ body {
   gap: 12px;
   justify-content: flex-end;
 }
+
+/* Invites Section Styling */
+.invites-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.invite-create-form {
+  background: #2a2a2a;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #3a3a3a;
+}
+
+.invite-create-form label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #b9bbbe;
+}
+
+.invite-create-form input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  background: #1e1e1e;
+  border: 1px solid #1e1e1e;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 15px;
+}
+
+.invite-create-form input:focus {
+  outline: none;
+  border-color: #5865f2;
+}
+
+.invite-form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.invite-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  border: 1px solid #3a3a3a;
+  transition: all 0.15s;
+}
+
+.invite-item:hover {
+  border-color: #5865f2;
+}
+
+.invite-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.invite-code {
+  font-family: 'Courier New', monospace;
+  background: #1e1e1e;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: #5865f2;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-block;
+  user-select: all;
+}
+
+.invite-meta {
+  font-size: 12px;
+  color: #8e9297;
+}
+
+.invite-expires {
+  color: #72767d;
+}
+
+.button-danger-small {
+  padding: 6px 12px;
+  background: #ed4245;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.button-danger-small:hover {
+  background: #c03537;
+}
+
+.no-invites {
+  text-align: center;
+  color: #72767d;
+  font-size: 14px;
+  padding: 24px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  border: 1px dashed #3a3a3a;
+}

@@ -400,6 +400,12 @@ serversRouter.post('/join/:inviteCode', authenticate, async (req: AuthRequest, r
       { _id: inviteCode },
       { $inc: { uses: 1 } as any }
     );
+    
+    // Check if invite has reached max uses and delete if so
+    const updatedInvite = await db.invites.findOne({ _id: inviteCode }) as any;
+    if (updatedInvite && updatedInvite.maxUses > 0 && updatedInvite.uses >= updatedInvite.maxUses) {
+      await db.invites.deleteOne({ _id: inviteCode });
+    }
 
     // Get server info
     const server = await db.servers.findOne({ _id: invite.server });
