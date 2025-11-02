@@ -612,21 +612,41 @@ export const Chat: Component = () => {
           </div>
         </Show>
         <Show when={pendingAttachments().length > 0 || uploadingAttachment()}>
-          <div class="pending-attachments">
-            <For each={pendingAttachments()}>
-              {(attachment, index) => (
-                <div class="pending-attachment">
-                  <img src={attachment} alt="Pending" />
-                  <button onClick={() => setPendingAttachments(pendingAttachments().filter((_, i) => i !== index()))}>×</button>
+          <div class="pending-attachments-wrapper">
+            <div class="pending-attachments-header">
+              <span>Attachments ({pendingAttachments().length})</span>
+              <Show when={pendingAttachments().length > 0}>
+                <button 
+                  class="clear-all-attachments" 
+                  onClick={() => setPendingAttachments([])}
+                  title="Remove all attachments"
+                >
+                  Clear all
+                </button>
+              </Show>
+            </div>
+            <div class="pending-attachments">
+              <For each={pendingAttachments()}>
+                {(attachment, index) => (
+                  <div class="pending-attachment">
+                    <img src={attachment} alt="Pending attachment" />
+                    <button 
+                      class="remove-attachment"
+                      onClick={() => setPendingAttachments(pendingAttachments().filter((_, i) => i !== index()))}
+                      title="Remove this attachment"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </For>
+              <Show when={uploadingAttachment()}>
+                <div class="pending-attachment uploading">
+                  <div class="upload-spinner">⏳</div>
+                  <span>Uploading...</span>
                 </div>
-              )}
-            </For>
-            <Show when={uploadingAttachment()}>
-              <div class="pending-attachment uploading">
-                <div class="upload-spinner">⏳</div>
-                <span>Uploading...</span>
-              </div>
-            </Show>
+              </Show>
+            </div>
           </div>
         </Show>
         <div class="message-input-container">

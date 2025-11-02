@@ -387,18 +387,55 @@ body {
   cursor: not-allowed;
 }
 
-.pending-attachments {
-  padding: 8px 16px;
+.pending-attachments-wrapper {
   background: #1e1e1e;
+  border-top: 1px solid #2a2a2a;
+}
+
+.pending-attachments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.pending-attachments-header span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #b9bbbe;
+  text-transform: uppercase;
+}
+
+.clear-all-attachments {
+  background: transparent;
+  border: none;
+  color: #ed4245;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.clear-all-attachments:hover {
+  background: rgba(237, 66, 69, 0.1);
+}
+
+.pending-attachments {
+  padding: 12px 16px;
   display: flex;
   gap: 8px;
   align-items: center;
+  overflow-x: auto;
 }
 
 .pending-attachment {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
 }
 
 .pending-attachment img {
@@ -406,6 +443,12 @@ body {
   height: 100%;
   object-fit: cover;
   border-radius: 4px;
+  border: 2px solid #2a2a2a;
+  transition: border-color 0.2s;
+}
+
+.pending-attachment:hover img {
+  border-color: #5865F2;
 }
 
 .pending-attachment.uploading {
@@ -416,6 +459,7 @@ body {
   background: #2a2a2a;
   border-radius: 4px;
   gap: 4px;
+  border: 2px dashed #4a4a4a;
 }
 
 .pending-attachment.uploading span {
@@ -437,19 +481,28 @@ body {
   }
 }
 
-.pending-attachment button {
+.remove-attachment {
   position: absolute;
   top: -8px;
   right: -8px;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   background: #ed4245;
-  border: none;
+  border: 2px solid #1e1e1e;
   border-radius: 50%;
   color: #fff;
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.remove-attachment:hover {
+  transform: scale(1.1);
+  background: #c03537;
 }
 
 .message-input form {
