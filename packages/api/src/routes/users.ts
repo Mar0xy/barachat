@@ -1,4 +1,5 @@
 import { Router, type Router as ExpressRouter } from 'express';
+import { ulid } from 'ulid';
 import { db } from '@barachat/database';
 import { EventType } from '@barachat/models';
 import { authenticate, AuthRequest } from '../middleware/auth';
@@ -155,6 +156,17 @@ usersRouter.post('/@me/relationships/:userId', authenticate, async (req: AuthReq
     // Set incoming request for target
     await db.getRedis().hSet(`relationships:${targetUserId}`, req.userId!, 'Incoming');
 
+    // Broadcast to both users
+    await db.publishEvent({
+      type: EventType.UserRelationship,
+      userId: req.userId!
+    });
+    
+    await db.publishEvent({
+      type: EventType.UserRelationship,
+      userId: targetUserId
+    });
+
     res.json({ status: 'Friend request sent' });
   } catch (error) {
     console.error('Error sending friend request:', error);
@@ -172,11 +184,45 @@ usersRouter.put('/@me/relationships/:userId', authenticate, async (req: AuthRequ
       // Set both as friends
       await db.getRedis().hSet(`relationships:${req.userId}`, targetUserId, 'Friend');
       await db.getRedis().hSet(`relationships:${targetUserId}`, req.userId!, 'Friend');
+      
+      // Create DM channel for both users
+      const dmChannelId = ulid();
+      const dmChannel = {
+        _id: dmChannelId,
+        channelType: 'DirectMessage',
+        recipients: [req.userId!, targetUserId]
+      };
+      
+      await db.channels.insertOne(dmChannel as any);
+      
+      // Broadcast to both users
+      await db.publishEvent({
+        type: EventType.UserRelationship,
+        userId: req.userId!
+      });
+      
+      await db.publishEvent({
+        type: EventType.UserRelationship,
+        userId: targetUserId
+      });
+      
       res.json({ status: 'Friend request accepted' });
     } else if (action === 'reject') {
       // Remove relationship
       await db.getRedis().hDel(`relationships:${req.userId}`, targetUserId);
       await db.getRedis().hDel(`relationships:${targetUserId}`, req.userId!);
+      
+      // Broadcast to both users
+      await db.publishEvent({
+        type: EventType.UserRelationship,
+        userId: req.userId!
+      });
+      
+      await db.publishEvent({
+        type: EventType.UserRelationship,
+        userId: targetUserId
+      });
+      
       res.json({ status: 'Friend request rejected' });
     } else {
       res.status(400).json({ error: 'Invalid action' });
@@ -194,6 +240,17 @@ usersRouter.delete('/@me/relationships/:userId', authenticate, async (req: AuthR
     
     await db.getRedis().hDel(`relationships:${req.userId}`, targetUserId);
     await db.getRedis().hDel(`relationships:${targetUserId}`, req.userId!);
+
+    // Broadcast to both users
+    await db.publishEvent({
+      type: EventType.UserRelationship,
+      userId: req.userId!
+    });
+    
+    await db.publishEvent({
+      type: EventType.UserRelationship,
+      userId: targetUserId
+    });
 
     res.json({ status: 'Friend removed' });
   } catch (error) {

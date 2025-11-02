@@ -4,7 +4,6 @@ import { User } from '../types';
 interface UserPanelProps {
   user: User | null;
   onSettingsClick: () => void;
-  onLogout: () => void;
 }
 
 export const UserPanel: Component<UserPanelProps> = (props) => {
@@ -48,9 +47,6 @@ export const UserPanel: Component<UserPanelProps> = (props) => {
       <div class="user-actions">
         <button onClick={props.onSettingsClick} title="User Settings">
           ⚙️
-        </button>
-        <button onClick={props.onLogout} title="Logout">
-          🚪
         </button>
       </div>
     </div>

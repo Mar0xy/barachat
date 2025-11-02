@@ -313,6 +313,11 @@ async function start() {
             serverId: event.serverId,
             userId: event.userId
           });
+        } else if (event.type === EventType.UserRelationship && event.userId) {
+          // Broadcast relationship update to specific user
+          broadcastToUser(event.userId, {
+            type: event.type
+          });
         } else {
           // For other event types, broadcast as-is
           broadcast(event);

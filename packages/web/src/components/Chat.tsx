@@ -649,6 +649,10 @@ export const Chat: Component = () => {
         if (currentChannel() === data.id) {
           setCurrentChannel('');
         }
+      } else if (data.type === 'UserRelationship') {
+        // Reload friends and DM channels when relationships change
+        loadFriends();
+        loadDMChannels();
       }
     };
 
@@ -764,7 +768,6 @@ export const Chat: Component = () => {
         <UserPanel
           user={user()}
           onSettingsClick={() => setShowUserSettings(true)}
-          onLogout={logout}
         />
       </div>
       
