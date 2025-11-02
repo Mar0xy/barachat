@@ -410,13 +410,6 @@ export const Chat: Component = () => {
       alert('Error deleting message');
     }
   };
-        setMessages([...messages(), message]);
-        setMessageInput('');
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  };
 
   const handleTyping = () => {
     const websocket = ws();
@@ -461,18 +454,6 @@ export const Chat: Component = () => {
       return `${userArray[0]}, ${userArray[1]}, and ${userArray[2]} are typing...`;
     } else {
       return 'Multiple users are typing...';
-    }
-  };
-        body: JSON.stringify({ content: messageInput() })
-      });
-
-      if (response.ok) {
-        const message = await response.json();
-        setMessages([...messages(), message]);
-        setMessageInput('');
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
     }
   };
 
