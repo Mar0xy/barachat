@@ -27,39 +27,41 @@ interface ChatAreaProps {
 
 export const ChatArea: Component<ChatAreaProps> = (props) => {
   let messagesEndRef: HTMLDivElement | undefined;
-  
+
   createEffect(() => {
     if (messagesEndRef) {
       messagesEndRef.scrollIntoView({ behavior: 'smooth' });
     }
   });
-  
+
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       props.onSendMessage();
     }
   };
-  
+
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
-  
+
   return (
     <div class="chat-area">
-      <Show when={props.currentChannel} fallback={
-        <div class="no-channel-selected">
-          Select a channel to start chatting
-        </div>
-      }>
+      <Show
+        when={props.currentChannel}
+        fallback={<div class="no-channel-selected">Select a channel to start chatting</div>}
+      >
         <div class="messages">
           <For each={props.messages}>
             {(message) => (
-              <div class="message" classList={{ 'own-message': message.author._id === props.user?._id }}>
-                <div 
+              <div
+                class="message"
+                classList={{ 'own-message': message.author._id === props.user?._id }}
+              >
+                <div
                   class="message-avatar"
-                  classList={{ 'clickable': !!props.onUserClick }}
+                  classList={{ clickable: !!props.onUserClick }}
                   onClick={() => props.onUserClick?.(message.author._id)}
                   style={{ cursor: props.onUserClick ? 'pointer' : 'default' }}
                 >
@@ -67,15 +69,17 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
                     <img src={message.author.avatar} alt={message.author.username} />
                   ) : (
                     <div class="avatar-placeholder">
-                      {(message.author.displayName || message.author.username).charAt(0).toUpperCase()}
+                      {(message.author.displayName || message.author.username)
+                        .charAt(0)
+                        .toUpperCase()}
                     </div>
                   )}
                 </div>
                 <div class="message-content">
                   <div class="message-header">
-                    <span 
+                    <span
                       class="message-author"
-                      classList={{ 'clickable': !!props.onUserClick }}
+                      classList={{ clickable: !!props.onUserClick }}
                       onClick={() => props.onUserClick?.(message.author._id)}
                       style={{ cursor: props.onUserClick ? 'pointer' : 'default' }}
                     >
@@ -115,16 +119,18 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
           </For>
           <div ref={messagesEndRef} />
         </div>
-        
+
         <Show when={props.typingText()}>
           <div class="typing-indicator">{props.typingText()}</div>
         </Show>
-        
+
         <Show when={props.pendingAttachments.length > 0}>
           <div class="pending-attachments-wrapper">
             <div class="pending-attachments-header">
               <span>Attachments ({props.pendingAttachments.length})</span>
-              <button class="clear-all-attachments" onClick={props.onClearAttachments}>Clear all</button>
+              <button class="clear-all-attachments" onClick={props.onClearAttachments}>
+                Clear all
+              </button>
             </div>
             <div class="pending-attachments">
               <For each={props.pendingAttachments}>
@@ -143,7 +149,7 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
             </div>
           </div>
         </Show>
-        
+
         <div class="message-input-container">
           <input
             type="file"
@@ -163,7 +169,7 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
           </button>
           <textarea
             class="message-input"
-            placeholder={props.messagePlaceholder || "Message #general"}
+            placeholder={props.messagePlaceholder || 'Message #general'}
             value={props.messageInput}
             onInput={(e) => props.onMessageInputChange(e.currentTarget.value)}
             onKeyDown={handleKeyDown}
@@ -171,12 +177,14 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
           />
         </div>
       </Show>
-      
+
       <Show when={props.lightboxImage()}>
         <div class="lightbox" onClick={props.onLightboxClose}>
           <div class="lightbox-content" onClick={(e) => e.stopPropagation()}>
             <img src={props.lightboxImage()!} alt="Full size" />
-            <button class="lightbox-close" onClick={props.onLightboxClose}>×</button>
+            <button class="lightbox-close" onClick={props.onLightboxClose}>
+              ×
+            </button>
           </div>
         </div>
       </Show>

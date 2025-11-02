@@ -26,14 +26,14 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
 
     const file = input.files[0];
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       const result = e.target?.result;
       if (typeof result === 'string') {
         setCropImageUrl(result);
       }
     };
-    
+
     reader.readAsDataURL(file);
   };
 
@@ -80,7 +80,7 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           displayName: displayName(),
           bio: bio(),
           status: {
@@ -115,14 +115,16 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
             Log Out
           </div>
         </div>
-        
+
         <div class="settings-content">
-          <button class="settings-close" onClick={props.onClose}>×</button>
-          
+          <button class="settings-close" onClick={props.onClose}>
+            ×
+          </button>
+
           <form onSubmit={handleSave}>
             <div class="settings-content-inner">
               <h2 class="settings-title">My Account</h2>
-              
+
               <div class="settings-section">
                 <label>
                   Username
@@ -213,7 +215,9 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
               </div>
 
               <div class="settings-actions">
-                <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
+                <button type="button" class="button-secondary" onClick={props.onClose}>
+                  Cancel
+                </button>
                 <button type="submit" class="button-primary" disabled={saving()}>
                   {saving() ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -221,7 +225,7 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
             </div>
           </form>
         </div>
-        
+
         <Show when={cropImageUrl()}>
           <ImageCropper
             imageUrl={cropImageUrl()!}

@@ -19,8 +19,8 @@ authRouter.post('/register', async (req, res) => {
     }
 
     // Check if user exists
-    const existing = await db.users.findOne({ 
-      $or: [{ username }, { email }] 
+    const existing = await db.users.findOne({
+      $or: [{ username }, { email }]
     });
 
     if (existing) {
@@ -48,7 +48,7 @@ authRouter.post('/register', async (req, res) => {
     const token = jwt.sign({ userId }, config.jwtSecret, { expiresIn: '7d' });
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
 
     res.json({
       token,
@@ -70,7 +70,7 @@ authRouter.post('/login', async (req, res) => {
     }
 
     // Find user
-    const user = await db.users.findOne({ email }) as any;
+    const user = (await db.users.findOne({ email })) as any;
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -88,13 +88,10 @@ authRouter.post('/login', async (req, res) => {
 
     // Set user presence to online
     await db.getRedis().set(`presence:${user._id}`, 'Online');
-    
+
     // Update user status in database
-    await db.users.updateOne(
-      { _id: user._id },
-      { $set: { 'status.presence': 'Online' } }
-    );
-    
+    await db.users.updateOne({ _id: user._id }, { $set: { 'status.presence': 'Online' } });
+
     // Broadcast user update
     await db.publishEvent({
       type: EventType.UserUpdate,
@@ -108,7 +105,7 @@ authRouter.post('/login', async (req, res) => {
     });
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password2, ...userWithoutPassword } = user;
 
     res.json({
       token,

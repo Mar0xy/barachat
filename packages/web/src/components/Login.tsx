@@ -40,19 +40,24 @@ export const Login: Component = () => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      'align-items': 'center',
-      'justify-content': 'center',
-      height: '100vh',
-      'background-color': '#36393f'
-    }}>
-      <form onSubmit={handleSubmit} style={{
-        'background-color': '#2f3136',
-        padding: '2rem',
-        'border-radius': '8px',
-        width: '320px'
-      }}>
+    <div
+      style={{
+        display: 'flex',
+        'align-items': 'center',
+        'justify-content': 'center',
+        height: '100vh',
+        'background-color': '#36393f'
+      }}
+    >
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          'background-color': '#2f3136',
+          padding: '2rem',
+          'border-radius': '8px',
+          width: '320px'
+        }}
+      >
         <h2 style={{ color: '#fff', 'margin-bottom': '1.5rem', 'text-align': 'center' }}>
           {isRegister() ? 'Create Account' : 'Welcome Back'}
         </h2>
@@ -107,17 +112,20 @@ export const Login: Component = () => {
           }}
         />
 
-        <button type="submit" style={{
-          width: '100%',
-          padding: '0.75rem',
-          'background-color': '#5865f2',
-          border: 'none',
-          'border-radius': '4px',
-          color: '#fff',
-          'font-size': '1rem',
-          cursor: 'pointer',
-          'font-weight': '500'
-        }}>
+        <button
+          type="submit"
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            'background-color': '#5865f2',
+            border: 'none',
+            'border-radius': '4px',
+            color: '#fff',
+            'font-size': '1rem',
+            cursor: 'pointer',
+            'font-weight': '500'
+          }}
+        >
           {isRegister() ? 'Register' : 'Login'}
         </button>
 

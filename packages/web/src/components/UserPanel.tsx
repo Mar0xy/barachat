@@ -11,7 +11,7 @@ export const UserPanel: Component<UserPanelProps> = (props) => {
     if (!props.user?.status?.presence || props.user.status.presence === 'Invisible') {
       return 'offline';
     }
-    
+
     switch (props.user.status.presence) {
       case 'Online':
         return 'online';
@@ -29,11 +29,14 @@ export const UserPanel: Component<UserPanelProps> = (props) => {
       <div class="user-info">
         <div class="user-avatar-wrapper">
           <div class="user-avatar">
-            <Show when={props.user?.avatar} fallback={
-              <div class="avatar-placeholder">
-                {(props.user?.displayName || props.user?.username || 'U').charAt(0).toUpperCase()}
-              </div>
-            }>
+            <Show
+              when={props.user?.avatar}
+              fallback={
+                <div class="avatar-placeholder">
+                  {(props.user?.displayName || props.user?.username || 'U').charAt(0).toUpperCase()}
+                </div>
+              }
+            >
               <img src={props.user!.avatar} alt={props.user!.username} />
             </Show>
           </div>

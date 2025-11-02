@@ -15,7 +15,11 @@ interface ChannelListProps {
 }
 
 export const ChannelList: Component<ChannelListProps> = (props) => {
-  const [contextMenu, setContextMenu] = createSignal<{ x: number; y: number; channel: Channel } | null>(null);
+  const [contextMenu, setContextMenu] = createSignal<{
+    x: number;
+    y: number;
+    channel: Channel;
+  } | null>(null);
   const [collapsedCategories, setCollapsedCategories] = createSignal<Set<string>>(new Set());
 
   const handleContextMenu = (e: MouseEvent, channel: Channel) => {
@@ -24,7 +28,7 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
       setContextMenu({ x: e.clientX, y: e.clientY, channel });
     }
   };
-  
+
   const handleCategoryContextMenu = (e: MouseEvent, category: Channel) => {
     e.preventDefault();
     e.stopPropagation();
@@ -49,13 +53,15 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
 
   // Organize channels by category
   const organizedChannels = createMemo(() => {
-    const categories = props.channels.filter(c => c.channelType === 'Category');
-    const uncategorized = props.channels.filter(c => c.channelType !== 'Category' && !c.category);
-    
+    const categories = props.channels.filter((c) => c.channelType === 'Category');
+    const uncategorized = props.channels.filter((c) => c.channelType !== 'Category' && !c.category);
+
     return {
-      categories: categories.map(cat => ({
+      categories: categories.map((cat) => ({
         ...cat,
-        channels: props.channels.filter(ch => ch.category === cat._id && ch.channelType !== 'Category')
+        channels: props.channels.filter(
+          (ch) => ch.category === cat._id && ch.channelType !== 'Category'
+        )
       })),
       uncategorized
     };
@@ -69,7 +75,7 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
           <span class="settings-icon">⚙️</span>
         </div>
       </Show>
-      
+
       <div class="channels-section">
         <div class="section-header">
           <span>{props.currentServer ? 'TEXT CHANNELS' : 'DIRECT MESSAGES'}</span>
@@ -79,14 +85,14 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
             </button>
           </Show>
         </div>
-        
+
         <Show when={props.currentServer}>
           {/* Categories with nested channels */}
           <For each={organizedChannels().categories}>
             {(category) => (
               <div class="channel-category-group">
-                <div 
-                  class="category-header" 
+                <div
+                  class="category-header"
                   onClick={() => toggleCategory(category._id)}
                   onContextMenu={(e) => handleCategoryContextMenu(e, category)}
                 >
@@ -103,31 +109,31 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
                         classList={{ active: props.currentChannel === channel._id }}
                         onClick={() => props.onChannelSelect(channel._id)}
                         onContextMenu={(e) => handleContextMenu(e, channel)}
-                    >
-                      # {channel.name}
-                    </button>
-                  )}
-                </For>
-              </Show>
-            </div>
-          )}
-        </For>
-        
-        {/* Uncategorized channels */}
-        <For each={organizedChannels().uncategorized}>
-          {(channel) => (
-            <button
-              class="channel-item"
-              classList={{ active: props.currentChannel === channel._id }}
-              onClick={() => props.onChannelSelect(channel._id)}
-              onContextMenu={(e) => handleContextMenu(e, channel)}
-            >
-              # {channel.name}
-            </button>
-          )}
-        </For>
+                      >
+                        # {channel.name}
+                      </button>
+                    )}
+                  </For>
+                </Show>
+              </div>
+            )}
+          </For>
+
+          {/* Uncategorized channels */}
+          <For each={organizedChannels().uncategorized}>
+            {(channel) => (
+              <button
+                class="channel-item"
+                classList={{ active: props.currentChannel === channel._id }}
+                onClick={() => props.onChannelSelect(channel._id)}
+                onContextMenu={(e) => handleContextMenu(e, channel)}
+              >
+                # {channel.name}
+              </button>
+            )}
+          </For>
         </Show>
-        
+
         {/* DM Channels when on home */}
         <Show when={!props.currentServer && props.dmChannels}>
           <For each={props.dmChannels}>
@@ -137,25 +143,25 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
                 classList={{ active: props.currentChannel === dmChannel._id }}
                 onClick={() => props.onChannelSelect(dmChannel._id)}
               >
-                @ {dmChannel.recipient?.displayName || dmChannel.recipient?.username || 'Unknown User'}
+                @{' '}
+                {dmChannel.recipient?.displayName ||
+                  dmChannel.recipient?.username ||
+                  'Unknown User'}
               </button>
             )}
           </For>
         </Show>
       </div>
-      
+
       {/* Context Menu */}
       <Show when={contextMenu()}>
-        <div 
-          class="context-menu-overlay" 
-          onClick={handleCloseContextMenu}
-        >
-          <div 
-            class="context-menu" 
+        <div class="context-menu-overlay" onClick={handleCloseContextMenu}>
+          <div
+            class="context-menu"
             style={{ left: `${contextMenu()!.x}px`, top: `${contextMenu()!.y}px` }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button 
+            <button
               class="context-menu-item"
               onClick={() => {
                 if (props.onEditChannel) {
@@ -166,7 +172,7 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
             >
               ✏️ Edit {contextMenu()!.channel.channelType === 'Category' ? 'Category' : 'Channel'}
             </button>
-            <button 
+            <button
               class="context-menu-item context-menu-item-danger"
               onClick={() => {
                 if (props.onEditChannel) {

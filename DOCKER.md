@@ -187,11 +187,18 @@ nginx:
   ports:
     - "3000:80"  # Use port 3000 instead
 ```
+Then access the application at `http://localhost:3000`.
 
 ### Services Can't Connect to Database
 Check that all services are on the same network:
 ```bash
 docker network inspect barachat_barachat-network
+```
+
+If the network doesn't exist or services aren't connected, try:
+```bash
+docker compose down
+docker compose up -d
 ```
 
 ### View Service Health

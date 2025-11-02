@@ -28,22 +28,21 @@ messagesRouter.post('/:channelId/messages', authenticate, async (req: AuthReques
     await db.messages.insertOne(message as any);
 
     // Update channel's last message
-    await db.channels.updateOne(
-      { _id: channelId },
-      { $set: { lastMessageId: message._id } }
-    );
+    await db.channels.updateOne({ _id: channelId }, { $set: { lastMessageId: message._id } });
 
     // Populate author information for response
     const author = await db.users.findOne({ _id: req.userId! });
     const messageWithAuthor = {
       ...message,
-      author: author ? {
-        _id: author._id,
-        username: author.username,
-        discriminator: author.discriminator,
-        displayName: author.displayName,
-        avatar: author.avatar
-      } : { _id: req.userId!, username: 'Unknown', discriminator: '0000' }
+      author: author
+        ? {
+            _id: author._id,
+            username: author.username,
+            discriminator: author.discriminator,
+            displayName: author.displayName,
+            avatar: author.avatar
+          }
+        : { _id: req.userId!, username: 'Unknown', discriminator: '0000' }
     };
 
     // Broadcast message to all other connected clients in the channel via Redis
@@ -73,11 +72,7 @@ messagesRouter.get('/:channelId/messages', authenticate, async (req: AuthRequest
       query._id = { $lt: before };
     }
 
-    const messages = await db.messages
-      .find(query)
-      .sort({ _id: -1 })
-      .limit(limit)
-      .toArray();
+    const messages = await db.messages.find(query).sort({ _id: -1 }).limit(limit).toArray();
 
     // Populate author information
     const messagesWithAuthors = await Promise.all(
@@ -85,13 +80,15 @@ messagesRouter.get('/:channelId/messages', authenticate, async (req: AuthRequest
         const author = await db.users.findOne({ _id: message.author });
         return {
           ...message,
-          author: author ? {
-            _id: author._id,
-            username: author.username,
-            discriminator: author.discriminator,
-            displayName: author.displayName,
-            avatar: author.avatar
-          } : { _id: message.author, username: 'Unknown', discriminator: '0000' }
+          author: author
+            ? {
+                _id: author._id,
+                username: author.username,
+                discriminator: author.discriminator,
+                displayName: author.displayName,
+                avatar: author.avatar
+              }
+            : { _id: message.author, username: 'Unknown', discriminator: '0000' }
         };
       })
     );
@@ -104,49 +101,53 @@ messagesRouter.get('/:channelId/messages', authenticate, async (req: AuthRequest
 });
 
 // Delete message
-messagesRouter.delete('/:channelId/messages/:messageId', authenticate, async (req: AuthRequest, res) => {
-  try {
-    const { channelId, messageId } = req.params;
+messagesRouter.delete(
+  '/:channelId/messages/:messageId',
+  authenticate,
+  async (req: AuthRequest, res) => {
+    try {
+      const { channelId, messageId } = req.params;
 
-    // Find the message
-    const message = await db.messages.findOne({ _id: messageId, channel: channelId });
+      // Find the message
+      const message = await db.messages.findOne({ _id: messageId, channel: channelId });
 
-    if (!message) {
-      return res.status(404).json({ error: 'Message not found' });
-    }
+      if (!message) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
 
-    // Check if user is the author or server owner
-    let canDelete = message.author === req.userId;
-    
-    if (!canDelete) {
-      // Check if this is a server channel and if user is the server owner
-      const channel = await db.channels.findOne({ _id: channelId });
-      if (channel && channel.server) {
-        const server = await db.servers.findOne({ _id: channel.server });
-        if (server && server.owner === req.userId) {
-          canDelete = true;
+      // Check if user is the author or server owner
+      let canDelete = message.author === req.userId;
+
+      if (!canDelete) {
+        // Check if this is a server channel and if user is the server owner
+        const channel = await db.channels.findOne({ _id: channelId });
+        if (channel && channel.server) {
+          const server = await db.servers.findOne({ _id: channel.server });
+          if (server && server.owner === req.userId) {
+            canDelete = true;
+          }
         }
       }
+
+      if (!canDelete) {
+        return res.status(403).json({ error: 'You can only delete your own messages' });
+      }
+
+      // Delete the message
+      await db.messages.deleteOne({ _id: messageId });
+
+      // Broadcast message deletion via Redis
+      await db.publishEvent({
+        type: EventType.MessageDelete,
+        channelId: channelId,
+        id: messageId,
+        channel: channelId
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    if (!canDelete) {
-      return res.status(403).json({ error: 'You can only delete your own messages' });
-    }
-
-    // Delete the message
-    await db.messages.deleteOne({ _id: messageId });
-
-    // Broadcast message deletion via Redis
-    await db.publishEvent({
-      type: EventType.MessageDelete,
-      channelId: channelId,
-      id: messageId,
-      channel: channelId
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting message:', error);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+);

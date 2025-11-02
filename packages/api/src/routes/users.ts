@@ -10,7 +10,7 @@ export const usersRouter: ExpressRouter = Router();
 usersRouter.get('/@me', authenticate, async (req: AuthRequest, res) => {
   try {
     const user = await db.users.findOne({ _id: req.userId });
-    
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -26,7 +26,7 @@ usersRouter.get('/@me', authenticate, async (req: AuthRequest, res) => {
 usersRouter.get('/search', authenticate, async (req: AuthRequest, res) => {
   try {
     const query = req.query.q as string;
-    
+
     if (!query) {
       return res.status(400).json({ error: 'Query parameter required' });
     }
@@ -59,7 +59,7 @@ usersRouter.get('/search', authenticate, async (req: AuthRequest, res) => {
 usersRouter.get('/:userId', authenticate, async (req: AuthRequest, res) => {
   try {
     const user = await db.users.findOne({ _id: req.params.userId });
-    
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -75,20 +75,17 @@ usersRouter.get('/:userId', authenticate, async (req: AuthRequest, res) => {
 usersRouter.patch('/@me', authenticate, async (req: AuthRequest, res) => {
   try {
     const { displayName, status, avatar, bio } = req.body;
-    
+
     const update: any = {};
     if (displayName !== undefined) update.displayName = displayName;
     if (status !== undefined) update.status = status;
     if (avatar !== undefined) update.avatar = avatar;
     if (bio !== undefined) update.bio = bio;
 
-    await db.users.updateOne(
-      { _id: req.userId },
-      { $set: update }
-    );
+    await db.users.updateOne({ _id: req.userId }, { $set: update });
 
     const user = await db.users.findOne({ _id: req.userId });
-    
+
     // Broadcast user update to all connected clients via Redis
     if (user && Object.keys(update).length > 0) {
       await db.publishEvent({
@@ -102,7 +99,7 @@ usersRouter.patch('/@me', authenticate, async (req: AuthRequest, res) => {
         }
       });
     }
-    
+
     res.json(user);
   } catch (error) {
     console.error('Error updating user:', error);
@@ -119,13 +116,13 @@ usersRouter.get('/@me/relationships', authenticate, async (req: AuthRequest, res
     }
 
     // Get all relationship records where this user is involved
-    const relationships = await db.getRedis().hGetAll(`relationships:${req.userId}`) || {};
-    
+    const relationships = (await db.getRedis().hGetAll(`relationships:${req.userId}`)) || {};
+
     // Fetch user details for each relationship
     const friendIds = Object.keys(relationships);
     const friends = await db.users.find({ _id: { $in: friendIds } }).toArray();
-    
-    const result = friends.map(friend => ({
+
+    const result = friends.map((friend) => ({
       ...friend,
       relationshipStatus: relationships[friend._id]
     }));
@@ -141,7 +138,7 @@ usersRouter.get('/@me/relationships', authenticate, async (req: AuthRequest, res
 usersRouter.post('/@me/relationships/:userId', authenticate, async (req: AuthRequest, res) => {
   try {
     const targetUserId = req.params.userId;
-    
+
     if (targetUserId === req.userId) {
       return res.status(400).json({ error: 'Cannot add yourself as a friend' });
     }
@@ -161,7 +158,7 @@ usersRouter.post('/@me/relationships/:userId', authenticate, async (req: AuthReq
       type: EventType.UserRelationship,
       userId: req.userId!
     });
-    
+
     await db.publishEvent({
       type: EventType.UserRelationship,
       userId: targetUserId
@@ -184,7 +181,7 @@ usersRouter.put('/@me/relationships/:userId', authenticate, async (req: AuthRequ
       // Set both as friends
       await db.getRedis().hSet(`relationships:${req.userId}`, targetUserId, 'Friend');
       await db.getRedis().hSet(`relationships:${targetUserId}`, req.userId!, 'Friend');
-      
+
       // Create DM channel for both users
       const dmChannelId = ulid();
       const dmChannel = {
@@ -192,37 +189,37 @@ usersRouter.put('/@me/relationships/:userId', authenticate, async (req: AuthRequ
         channelType: 'DirectMessage',
         recipients: [req.userId!, targetUserId]
       };
-      
+
       await db.channels.insertOne(dmChannel as any);
-      
+
       // Broadcast to both users
       await db.publishEvent({
         type: EventType.UserRelationship,
         userId: req.userId!
       });
-      
+
       await db.publishEvent({
         type: EventType.UserRelationship,
         userId: targetUserId
       });
-      
+
       res.json({ status: 'Friend request accepted' });
     } else if (action === 'reject') {
       // Remove relationship
       await db.getRedis().hDel(`relationships:${req.userId}`, targetUserId);
       await db.getRedis().hDel(`relationships:${targetUserId}`, req.userId!);
-      
+
       // Broadcast to both users
       await db.publishEvent({
         type: EventType.UserRelationship,
         userId: req.userId!
       });
-      
+
       await db.publishEvent({
         type: EventType.UserRelationship,
         userId: targetUserId
       });
-      
+
       res.json({ status: 'Friend request rejected' });
     } else {
       res.status(400).json({ error: 'Invalid action' });
@@ -237,7 +234,7 @@ usersRouter.put('/@me/relationships/:userId', authenticate, async (req: AuthRequ
 usersRouter.delete('/@me/relationships/:userId', authenticate, async (req: AuthRequest, res) => {
   try {
     const targetUserId = req.params.userId;
-    
+
     await db.getRedis().hDel(`relationships:${req.userId}`, targetUserId);
     await db.getRedis().hDel(`relationships:${targetUserId}`, req.userId!);
 
@@ -246,11 +243,11 @@ usersRouter.delete('/@me/relationships/:userId', authenticate, async (req: AuthR
       channelType: ChannelType.DirectMessage,
       recipients: { $all: [req.userId!, targetUserId] }
     });
-    
+
     if (dmChannel) {
       // Delete all messages in the DM channel
       await db.messages.deleteMany({ channel: dmChannel._id });
-      
+
       // Delete the DM channel
       await db.channels.deleteOne({ _id: dmChannel._id });
     }
@@ -260,7 +257,7 @@ usersRouter.delete('/@me/relationships/:userId', authenticate, async (req: AuthR
       type: EventType.UserRelationship,
       userId: req.userId!
     });
-    
+
     await db.publishEvent({
       type: EventType.UserRelationship,
       userId: targetUserId
