@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import { ulid } from 'ulid';
 import { db } from '@barachat/database';
 import { config } from '@barachat/config';
+import { authenticate, AuthRequest } from '../middleware/auth';
+import { EventType } from '@barachat/models';
 
 export const authRouter: ExpressRouter = Router();
 
@@ -93,6 +95,26 @@ authRouter.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Logout
+authRouter.post('/logout', authenticate, async (req: AuthRequest, res) => {
+  try {
+    // Set user presence to offline
+    await db.setPresence(req.userId!, false);
+
+    // Broadcast offline status
+    await db.publishEvent({
+      type: EventType.UserPresence,
+      id: req.userId!,
+      online: false
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Logout error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
