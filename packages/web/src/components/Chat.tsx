@@ -7,6 +7,7 @@ import { ServerSettingsModal } from './modals/ServerSettingsModal';
 import { CreateChannelModal } from './modals/CreateChannelModal';
 import { UserProfileModal } from './modals/UserProfileModal';
 import { FriendsList } from './FriendsList';
+import { MembersList } from './MembersList';
 import { User, Friend, Member, Server, Channel, Message } from '../types';
 import { API_URL, WS_URL } from '../utils/constants';
 import { ServerList } from './ServerList';
@@ -87,6 +88,22 @@ export const Chat: Component = () => {
       }
     } catch (error) {
       console.error('Error loading friends:', error);
+    }
+  };
+
+  // Load server members
+  const loadMembers = async (serverId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/${serverId}/members`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const memberList = await response.json();
+        setMembers(memberList);
+      }
+    } catch (error) {
+      console.error('Error loading members:', error);
     }
   };
 
@@ -341,6 +358,7 @@ export const Chat: Component = () => {
     const serverId = currentServer();
     if (serverId) {
       loadChannels(serverId);
+      loadMembers(serverId);
       // Restore last channel for this server
       const memory = serverChannelMemory();
       const lastChannel = memory[serverId];
@@ -348,8 +366,9 @@ export const Chat: Component = () => {
         setCurrentChannel(lastChannel);
       }
     } else {
-      // When switching to home, clear current channel
+      // When switching to home, clear current channel and members
       setCurrentChannel('');
+      setMembers([]);
     }
   });
 
@@ -479,26 +498,32 @@ export const Chat: Component = () => {
       />
       
       <Show when={!currentServer()} fallback={
-        <ChatArea
-          messages={messages()}
-          currentChannel={currentChannel()}
-          messageInput={messageInput()}
-          onMessageInputChange={setMessageInput}
-          onSendMessage={sendMessage}
-          onDeleteMessage={deleteMessage}
-          onTyping={handleTyping}
-          user={user()}
-          typingText={typingText()}
-          lightboxImage={lightboxImage()}
-          onLightboxClose={() => setLightboxImage(null)}
-          onImageClick={(url) => setLightboxImage(url)}
-          pendingAttachments={pendingAttachments()}
-          onRemoveAttachment={removePendingAttachment}
-          onClearAttachments={() => setPendingAttachments([])}
-          uploadingAttachment={uploadingAttachment()}
-          onAttachmentUpload={handleAttachmentUpload}
-          fileInputRef={fileInputRef}
-        />
+        <>
+          <ChatArea
+            messages={messages()}
+            currentChannel={currentChannel()}
+            messageInput={messageInput()}
+            onMessageInputChange={setMessageInput}
+            onSendMessage={sendMessage}
+            onDeleteMessage={deleteMessage}
+            onTyping={handleTyping}
+            user={user()}
+            typingText={typingText()}
+            lightboxImage={lightboxImage()}
+            onLightboxClose={() => setLightboxImage(null)}
+            onImageClick={(url) => setLightboxImage(url)}
+            pendingAttachments={pendingAttachments()}
+            onRemoveAttachment={removePendingAttachment}
+            onClearAttachments={() => setPendingAttachments([])}
+            uploadingAttachment={uploadingAttachment()}
+            onAttachmentUpload={handleAttachmentUpload}
+            fileInputRef={fileInputRef}
+          />
+          <MembersList
+            members={members()}
+            onMemberClick={loadUserProfile}
+          />
+        </>
       }>
         <FriendsList
           friends={friends()}

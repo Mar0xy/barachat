@@ -352,6 +352,107 @@ body {
   align-items: center;
 }
 
+/* Members List */
+.members-list {
+  width: 240px;
+  background: #1e1e1e;
+  border-left: 1px solid #2a2a2a;
+  overflow-y: auto;
+  padding: 16px 8px;
+}
+
+.members-section {
+  margin-bottom: 24px;
+}
+
+.members-section h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8e9297;
+  text-transform: uppercase;
+  margin: 0 0 8px 8px;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 2px;
+}
+
+.member-item:hover {
+  background: #2a2a2a;
+}
+
+.member-item.offline-member {
+  opacity: 0.5;
+}
+
+.member-item.offline-member:hover {
+  opacity: 0.7;
+}
+
+.member-avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.member-avatar-placeholder {
+  background: #5865f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.member-status-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 3px solid #1e1e1e;
+}
+
+.member-status-indicator.online {
+  background: #3ba55d;
+}
+
+.member-status-indicator.idle {
+  background: #faa61a;
+}
+
+.member-status-indicator.dnd {
+  background: #ed4245;
+}
+
+.member-status-indicator.offline {
+  background: #747f8d;
+}
+
+.member-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #dcddde;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* User Profile Modal */
 .user-profile-modal {
   max-width: 600px;
