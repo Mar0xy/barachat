@@ -124,14 +124,14 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
     const presence = friend.status?.presence || 'Invisible';
     if (presence === 'Online') return 'online';
     if (presence === 'Idle') return 'idle';
-    if (presence === 'Busy') return 'dnd';
+    if (presence === 'Do Not Disturb' || presence === 'DND') return 'dnd';
     return '';
   };
 
   const getPresenceText = (friend: Friend) => {
     const presence = friend.status?.presence || 'Offline';
     if (presence === 'Idle') return 'Idle';
-    if (presence === 'Busy') return 'Do Not Disturb';
+    if (presence === 'Do Not Disturb' || presence === 'DND') return 'Do Not Disturb';
     if (presence === 'Invisible') return 'Offline';
     return presence;
   };

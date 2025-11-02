@@ -517,10 +517,15 @@ export const Chat: Component = () => {
       const data = JSON.parse(event.data);
       
       if (data.type === 'Message') {
-        // Only add message if it's for the current channel and not already in the list (from our own send)
-        if (data.message.channel === currentChannel() && 
-            !messages().some(m => m._id === data.message._id)) {
-          setMessages([...messages(), data.message]);
+        // Add message if it's for the current channel and not already in the list
+        if (data.message.channel === currentChannel()) {
+          setMessages(prev => {
+            // Check if message already exists
+            if (prev.some(m => m._id === data.message._id)) {
+              return prev;
+            }
+            return [...prev, data.message];
+          });
         }
       } else if (data.type === 'MessageDeleted') {
         setMessages(messages().filter(m => m._id !== data.messageId));
@@ -615,6 +620,7 @@ export const Chat: Component = () => {
         currentServer={currentServer()}
         onServerSelect={(serverId) => setCurrentServer(serverId)}
         onCreateServer={() => setShowCreateServer(true)}
+        onHomeClick={() => setCurrentChannel('')}
       />
       
       <div class="sidebar">

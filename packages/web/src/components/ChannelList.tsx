@@ -15,6 +15,7 @@ interface ChannelListProps {
 
 export const ChannelList: Component<ChannelListProps> = (props) => {
   const [contextMenu, setContextMenu] = createSignal<{ x: number; y: number; channel: Channel } | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = createSignal<Set<string>>(new Set());
 
   const handleContextMenu = (e: MouseEvent, channel: Channel) => {
     e.preventDefault();
@@ -25,6 +26,16 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
 
   const handleCloseContextMenu = () => {
     setContextMenu(null);
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    const collapsed = new Set(collapsedCategories());
+    if (collapsed.has(categoryId)) {
+      collapsed.delete(categoryId);
+    } else {
+      collapsed.add(categoryId);
+    }
+    setCollapsedCategories(collapsed);
   };
 
   // Organize channels by category
@@ -65,22 +76,26 @@ export const ChannelList: Component<ChannelListProps> = (props) => {
           <For each={organizedChannels().categories}>
             {(category) => (
               <div class="channel-category-group">
-                <div class="category-header">
-                  <span class="category-arrow">▼</span>
+                <div class="category-header" onClick={() => toggleCategory(category._id)}>
+                  <span class="category-arrow">
+                    {collapsedCategories().has(category._id) ? '▶' : '▼'}
+                  </span>
                   <span class="category-name">{category.name}</span>
                 </div>
-                <For each={category.channels}>
-                  {(channel) => (
-                    <button
-                      class="channel-item channel-nested"
-                      classList={{ active: props.currentChannel === channel._id }}
-                      onClick={() => props.onChannelSelect(channel._id)}
-                      onContextMenu={(e) => handleContextMenu(e, channel)}
-                  >
-                    # {channel.name}
-                  </button>
-                )}
-              </For>
+                <Show when={!collapsedCategories().has(category._id)}>
+                  <For each={category.channels}>
+                    {(channel) => (
+                      <button
+                        class="channel-item channel-nested"
+                        classList={{ active: props.currentChannel === channel._id }}
+                        onClick={() => props.onChannelSelect(channel._id)}
+                        onContextMenu={(e) => handleContextMenu(e, channel)}
+                    >
+                      # {channel.name}
+                    </button>
+                  )}
+                </For>
+              </Show>
             </div>
           )}
         </For>

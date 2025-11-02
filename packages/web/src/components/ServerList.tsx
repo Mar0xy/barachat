@@ -6,6 +6,7 @@ interface ServerListProps {
   currentServer: string;
   onServerSelect: (serverId: string) => void;
   onCreateServer: () => void;
+  onHomeClick?: () => void;
 }
 
 export const ServerList: Component<ServerListProps> = (props) => {
@@ -22,7 +23,10 @@ export const ServerList: Component<ServerListProps> = (props) => {
       <button
         class="server-item home-button"
         classList={{ active: !props.currentServer }}
-        onClick={() => props.onServerSelect('')}
+        onClick={() => {
+          props.onServerSelect('');
+          props.onHomeClick?.();
+        }}
         title="Home"
       >
         🏠

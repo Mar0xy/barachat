@@ -903,6 +903,13 @@ body {
   flex-shrink: 0;
 }
 
+.message-avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
 .message-content-wrapper {
   flex: 1;
   min-width: 0;
@@ -1270,6 +1277,39 @@ body {
   color: #fff;
 }
 
+/* Button Variants */
+.button-danger {
+  background-color: #ed4245;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.button-danger:hover {
+  background-color: #c03537;
+}
+
+.button-secondary {
+  background-color: var(--background-tertiary);
+  color: var(--text-normal);
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.button-secondary:hover {
+  background-color: var(--background-modifier-hover);
+}
+
 /* Typing Indicator */
 .typing-indicator {
   padding: 0 16px 8px 72px;
@@ -1422,7 +1462,8 @@ body {
 }
 
 .modal-body input,
-.modal-body textarea {
+.modal-body textarea,
+.modal-body select {
   width: 100%;
   padding: 10px;
   margin-top: 8px;
@@ -1435,7 +1476,8 @@ body {
 }
 
 .modal-body input:focus,
-.modal-body textarea:focus {
+.modal-body textarea:focus,
+.modal-body select:focus {
   outline: none;
   border-color: #5865f2;
 }
