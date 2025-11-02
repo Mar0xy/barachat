@@ -33,6 +33,15 @@ export const ServerList: Component<ServerListProps> = (props) => {
       <For each={props.servers}>
         {(server) => {
           const serverName = getServerName(server);
+          const acronym = serverName
+            ? serverName.split(' ')
+                .filter(word => word.length > 0)
+                .map((word) => word[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2)
+            : '??';
+          
           return (
             <button
               class="server-item"
@@ -44,12 +53,7 @@ export const ServerList: Component<ServerListProps> = (props) => {
                 <img src={server.icon} alt={serverName || 'Server'} />
               ) : (
                 <div class="server-acronym">
-                  {serverName
-                    .split(' ')
-                    .map((word) => word[0])
-                    .join('')
-                    .toUpperCase()
-                    .slice(0, 2) || '??'}
+                  {acronym || '??'}
                 </div>
               )}
             </button>
