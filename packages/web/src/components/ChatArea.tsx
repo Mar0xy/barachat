@@ -89,7 +89,7 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
                           <img
                             src={attachment}
                             alt="attachment"
-                            class="message-attachment"
+                            class="message-image"
                             onClick={() => props.onImageClick(attachment)}
                           />
                         )}
@@ -108,12 +108,12 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
         </Show>
         
         <Show when={props.pendingAttachments.length > 0}>
-          <div class="pending-attachments">
+          <div class="pending-attachments-wrapper">
             <div class="pending-attachments-header">
               <span>Attachments ({props.pendingAttachments.length})</span>
-              <button onClick={props.onClearAttachments}>Clear all</button>
+              <button class="clear-all-attachments" onClick={props.onClearAttachments}>Clear all</button>
             </div>
-            <div class="pending-attachments-list">
+            <div class="pending-attachments">
               <For each={props.pendingAttachments}>
                 {(attachment) => (
                   <div class="pending-attachment">
@@ -161,8 +161,10 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
       
       <Show when={props.lightboxImage()}>
         <div class="lightbox" onClick={props.onLightboxClose}>
-          <img src={props.lightboxImage()!} alt="Full size" onClick={(e) => e.stopPropagation()} />
-          <button class="lightbox-close" onClick={props.onLightboxClose}>×</button>
+          <div class="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <img src={props.lightboxImage()!} alt="Full size" />
+            <button class="lightbox-close" onClick={props.onLightboxClose}>×</button>
+          </div>
         </div>
       </Show>
     </div>

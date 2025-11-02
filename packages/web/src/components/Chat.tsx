@@ -590,7 +590,7 @@ export const Chat: Component = () => {
         />
       </div>
       
-      <Show when={!currentServer()} fallback={
+      <Show when={!currentServer() && !currentChannel()} fallback={
         <>
           <ChatArea
             messages={messages()}
@@ -612,10 +612,12 @@ export const Chat: Component = () => {
             onAttachmentUpload={handleAttachmentUpload}
             fileInputRef={fileInputRef}
           />
-          <MembersList
-            members={members()}
-            onMemberClick={loadUserProfile}
-          />
+          <Show when={currentServer()}>
+            <MembersList
+              members={members()}
+              onMemberClick={loadUserProfile}
+            />
+          </Show>
         </>
       }>
         <FriendsList
