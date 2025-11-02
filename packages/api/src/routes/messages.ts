@@ -115,8 +115,21 @@ messagesRouter.delete('/:channelId/messages/:messageId', authenticate, async (re
       return res.status(404).json({ error: 'Message not found' });
     }
 
-    // Check if user is the author
-    if (message.author !== req.userId) {
+    // Check if user is the author or server owner
+    let canDelete = message.author === req.userId;
+    
+    if (!canDelete) {
+      // Check if this is a server channel and if user is the server owner
+      const channel = await db.channels.findOne({ _id: channelId });
+      if (channel && channel.server) {
+        const server = await db.servers.findOne({ _id: channel.server });
+        if (server && server.owner === req.userId) {
+          canDelete = true;
+        }
+      }
+    }
+
+    if (!canDelete) {
       return res.status(403).json({ error: 'You can only delete your own messages' });
     }
 
