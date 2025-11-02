@@ -790,6 +790,8 @@ export const Chat: Component = () => {
             onAttachmentUpload={handleAttachmentUpload}
             fileInputRef={fileInputRef}
             messagePlaceholder={messagePlaceholder()}
+            onUserClick={loadUserProfile}
+            isServerOwner={isCurrentServerOwner()}
           />
           <Show when={currentServer()}>
             <MembersList

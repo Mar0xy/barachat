@@ -1451,6 +1451,8 @@ body {
 .modal-body {
   padding: 20px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .modal-body label {
@@ -1721,6 +1723,17 @@ body {
 .message-author {
   font-weight: 600;
   margin-bottom: 4px;
+}
+
+.message-author.clickable:hover {
+  text-decoration: underline;
+  color: #5865f2;
+}
+
+.message-avatar.clickable:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+  transition: all 0.2s;
 }
 
 .message-content {
