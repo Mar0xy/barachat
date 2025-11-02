@@ -1,5 +1,6 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import { db } from '@barachat/database';
+import { broadcast } from '@barachat/websocket';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
 export const usersRouter: ExpressRouter = Router();
@@ -86,6 +87,16 @@ usersRouter.patch('/@me', authenticate, async (req: AuthRequest, res) => {
     );
 
     const user = await db.users.findOne({ _id: req.userId });
+    
+    // Broadcast user update to all connected clients (for status changes, etc.)
+    if (status !== undefined) {
+      broadcast({
+        type: 'UserUpdate',
+        userId: req.userId,
+        status: status
+      });
+    }
+    
     res.json(user);
   } catch (error) {
     console.error('Error updating user:', error);

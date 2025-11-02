@@ -1,6 +1,8 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import { ulid } from 'ulid';
 import { db } from '@barachat/database';
+import { EventType } from '@barachat/models';
+import { broadcastToChannel } from '@barachat/websocket';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
 export const messagesRouter: ExpressRouter = Router();
@@ -44,6 +46,12 @@ messagesRouter.post('/:channelId/messages', authenticate, async (req: AuthReques
         avatar: author.avatar
       } : { _id: req.userId!, username: 'Unknown', discriminator: '0000' }
     };
+
+    // Broadcast message to all connected clients in the channel
+    broadcastToChannel(channelId, {
+      type: 'Message',
+      message: messageWithAuthor
+    }, req.userId!);
 
     res.json(messageWithAuthor);
   } catch (error) {
@@ -113,6 +121,13 @@ messagesRouter.delete('/:channelId/messages/:messageId', authenticate, async (re
 
     // Delete the message
     await db.messages.deleteOne({ _id: messageId });
+
+    // Broadcast message deletion
+    broadcastToChannel(channelId, {
+      type: 'MessageDeleted',
+      messageId,
+      channelId
+    });
 
     res.json({ success: true });
   } catch (error) {
