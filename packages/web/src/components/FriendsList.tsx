@@ -5,6 +5,7 @@ import { API_URL } from '../utils/constants';
 interface FriendsListProps {
   friends: Friend[];
   onFriendSelect?: (friendId: string) => void;
+  onUserProfileClick?: (userId: string) => void;
   onRefresh: () => void;
 }
 
@@ -171,7 +172,7 @@ export const FriendsList: Component<FriendsListProps> = (props) => {
         <h4>All Friends — {acceptedFriends().length}</h4>
         <For each={acceptedFriends()}>
           {(friend) => (
-            <div class="friend-item" onClick={() => props.onFriendSelect?.(friend._id)}>
+            <div class="friend-item" onClick={() => props.onUserProfileClick?.(friend._id)}>
               <div class="friend-avatar">
                 {friend.avatar ? (
                   <img src={friend.avatar} alt={friend.username} />

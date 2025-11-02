@@ -5,6 +5,7 @@ import { CreateServerModal } from './modals/CreateServerModal';
 import { UserSettingsModal } from './modals/UserSettingsModal';
 import { ServerSettingsModal } from './modals/ServerSettingsModal';
 import { CreateChannelModal } from './modals/CreateChannelModal';
+import { UserProfileModal } from './modals/UserProfileModal';
 import { FriendsList } from './FriendsList';
 import { User, Friend, Member, Server, Channel, Message } from '../types';
 import { API_URL, WS_URL } from '../utils/constants';
@@ -86,6 +87,22 @@ export const Chat: Component = () => {
       }
     } catch (error) {
       console.error('Error loading friends:', error);
+    }
+  };
+
+  // Load and show user profile
+  const loadUserProfile = async (userId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setShowUserProfile(userData);
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
     }
   };
 
@@ -485,6 +502,7 @@ export const Chat: Component = () => {
       }>
         <FriendsList
           friends={friends()}
+          onUserProfileClick={loadUserProfile}
           onRefresh={loadFriends}
         />
       </Show>
@@ -524,6 +542,15 @@ export const Chat: Component = () => {
           categories={channels().filter(c => c.channelType === 'category')}
           onClose={() => setShowCreateChannel(false)}
           onCreate={createChannel}
+        />
+      </Show>
+      
+      <Show when={showUserProfile()}>
+        <UserProfileModal
+          user={showUserProfile()}
+          currentUser={user()}
+          onClose={() => setShowUserProfile(null)}
+          onRefresh={loadFriends}
         />
       </Show>
     </div>
