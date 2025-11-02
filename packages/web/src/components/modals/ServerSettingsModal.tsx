@@ -1,4 +1,4 @@
-import { Component, createSignal, Show } from 'solid-js';
+import { Component, createSignal, Show, For } from 'solid-js';
 import { Server } from '../../types';
 import { API_URL } from '../../utils/constants';
 import { ImageCropper } from '../../ImageCropper';
@@ -7,6 +7,7 @@ interface ServerSettingsModalProps {
   server: Server | undefined;
   onClose: () => void;
   onUpdate: (server: Server) => void;
+  onLeave?: () => void;
 }
 
 export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) => {
@@ -16,6 +17,103 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
   const [saving, setSaving] = createSignal(false);
   const [uploading, setUploading] = createSignal(false);
   const [cropImageUrl, setCropImageUrl] = createSignal<string | null>(null);
+  const [invites, setInvites] = createSignal<any[]>([]);
+  const [showInvites, setShowInvites] = createSignal(false);
+  const [creatingInvite, setCreatingInvite] = createSignal(false);
+
+  // Load invites
+  const loadInvites = async () => {
+    if (!props.server) return;
+    
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/${props.server._id}/invites`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setInvites(data);
+      }
+    } catch (error) {
+      console.error('Error loading invites:', error);
+    }
+  };
+
+  // Create invite
+  const createInvite = async () => {
+    if (!props.server) return;
+    
+    setCreatingInvite(true);
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/${props.server._id}/invites`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          maxUses: 0,  // Unlimited uses
+          expiresIn: 604800  // 7 days
+        })
+      });
+      
+      if (response.ok) {
+        await loadInvites();
+      }
+    } catch (error) {
+      console.error('Error creating invite:', error);
+    } finally {
+      setCreatingInvite(false);
+    }
+  };
+
+  // Delete invite
+  const deleteInvite = async (inviteId: string) => {
+    if (!props.server) return;
+    
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/${props.server._id}/invites/${inviteId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        setInvites(invites().filter(i => i._id !== inviteId));
+      }
+    } catch (error) {
+      console.error('Error deleting invite:', error);
+    }
+  };
+
+  // Leave server
+  const handleLeaveServer = async () => {
+    if (!props.server) return;
+    
+    const confirmMessage = props.server.owner === localStorage.getItem('userId')
+      ? 'You are the owner of this server. Leaving will DELETE the server permanently. Are you sure?'
+      : 'Are you sure you want to leave this server?';
+    
+    if (!confirm(confirmMessage)) return;
+    
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/${props.server._id}/leave`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        props.onLeave?.();
+        props.onClose();
+      }
+    } catch (error) {
+      console.error('Error leaving server:', error);
+      alert('Failed to leave server');
+    }
+  };
 
   const handleFileSelect = (e: Event) => {
     const input = e.target as HTMLInputElement;
@@ -156,6 +254,71 @@ export const ServerSettingsModal: Component<ServerSettingsModalProps> = (props) 
                 Server ID
                 <input type="text" value={props.server?._id || ''} disabled />
               </label>
+            </div>
+
+            <div class="settings-section">
+              <h3>Invites</h3>
+              <button 
+                type="button" 
+                class="button-secondary"
+                onClick={() => {
+                  setShowInvites(!showInvites());
+                  if (!showInvites()) {
+                    loadInvites();
+                  }
+                }}
+              >
+                {showInvites() ? 'Hide Invites' : 'Show Invites'}
+              </button>
+              
+              <Show when={showInvites()}>
+                <div class="invites-list">
+                  <button 
+                    type="button" 
+                    class="button-primary" 
+                    onClick={createInvite}
+                    disabled={creatingInvite()}
+                  >
+                    {creatingInvite() ? 'Creating...' : 'Create Invite'}
+                  </button>
+                  
+                  <For each={invites()}>
+                    {(invite) => (
+                      <div class="invite-item">
+                        <code class="invite-code">{invite._id}</code>
+                        <span class="invite-uses">Uses: {invite.uses}/{invite.maxUses || '∞'}</span>
+                        <button 
+                          type="button"
+                          class="button-danger-small"
+                          onClick={() => deleteInvite(invite._id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </For>
+                  
+                  <Show when={invites().length === 0}>
+                    <p class="no-invites">No active invites</p>
+                  </Show>
+                </div>
+              </Show>
+            </div>
+
+            <div class="settings-section danger-zone">
+              <h3>Danger Zone</h3>
+              <button 
+                type="button" 
+                class="button-danger"
+                onClick={handleLeaveServer}
+              >
+                Leave Server
+              </button>
+              <p class="danger-text">
+                {props.server?.owner === localStorage.getItem('userId')
+                  ? 'Warning: Leaving will permanently delete this server!'
+                  : 'You will no longer have access to this server.'}
+              </p>
             </div>
           </div>
           <div class="modal-footer">

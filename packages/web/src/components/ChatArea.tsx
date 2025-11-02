@@ -20,6 +20,7 @@ interface ChatAreaProps {
   uploadingAttachment: boolean;
   onAttachmentUpload: (files: FileList | null) => void;
   fileInputRef?: HTMLInputElement;
+  messagePlaceholder?: string;
 }
 
 export const ChatArea: Component<ChatAreaProps> = (props) => {
@@ -150,7 +151,7 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
           </button>
           <textarea
             class="message-input"
-            placeholder="Message #general"
+            placeholder={props.messagePlaceholder || "Message #general"}
             value={props.messageInput}
             onInput={(e) => props.onMessageInputChange(e.currentTarget.value)}
             onKeyDown={handleKeyDown}
