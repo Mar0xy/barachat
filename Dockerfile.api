@@ -11,6 +11,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/models/package.json ./packages/models/
 COPY packages/config/package.json ./packages/config/
 COPY packages/database/package.json ./packages/database/
+COPY packages/websocket/package.json ./packages/websocket/
 COPY packages/api/package.json ./packages/api/
 
 # Install dependencies
@@ -21,12 +22,14 @@ COPY tsconfig.json ./
 COPY packages/models ./packages/models
 COPY packages/config ./packages/config
 COPY packages/database ./packages/database
+COPY packages/websocket ./packages/websocket
 COPY packages/api ./packages/api
 
 # Build
 RUN pnpm --filter @barachat/models build && \
     pnpm --filter @barachat/config build && \
     pnpm --filter @barachat/database build && \
+    pnpm --filter @barachat/websocket build && \
     pnpm --filter @barachat/api build
 
 # Production stage
@@ -41,6 +44,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/models/package.json ./packages/models/
 COPY packages/config/package.json ./packages/config/
 COPY packages/database/package.json ./packages/database/
+COPY packages/websocket/package.json ./packages/websocket/
 COPY packages/api/package.json ./packages/api/
 
 # Install production dependencies only
@@ -50,6 +54,7 @@ RUN pnpm install --frozen-lockfile --prod
 COPY --from=builder /app/packages/models/dist ./packages/models/dist
 COPY --from=builder /app/packages/config/dist ./packages/config/dist
 COPY --from=builder /app/packages/database/dist ./packages/database/dist
+COPY --from=builder /app/packages/websocket/dist ./packages/websocket/dist
 COPY --from=builder /app/packages/api/dist ./packages/api/dist
 
 # Create uploads directory
