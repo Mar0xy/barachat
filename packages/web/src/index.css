@@ -881,13 +881,12 @@ body {
 .message {
   display: flex;
   gap: 16px;
-  padding: 4px 0;
+  padding: 4px 8px;
+  margin: 0 -8px;
 }
 
 .message:hover {
   background: #2a2a2a;
-  margin: 0 -8px;
-  padding: 4px 8px;
 }
 
 .message-avatar {
@@ -1004,19 +1003,24 @@ body {
 }
 
 .message-input-container {
-  padding: 8px 16px;
+  padding: 0 16px 16px 16px;
   background: #1e1e1e;
+  position: relative;
+}
+
+.message-input-wrapper {
+  background: #2a2a2a;
+  border-radius: 8px;
   display: flex;
-  align-items: center;
-  gap: 0;
+  align-items: flex-end;
+  padding-right: 8px;
 }
 
 .message-input {
   flex: 1;
   padding: 10px 12px;
-  background: #2a2a2a;
+  background: transparent;
   border: none;
-  border-radius: 8px;
   color: #fff;
   font-size: 14px;
   font-family: inherit;
@@ -1027,33 +1031,10 @@ body {
 
 .message-input:focus {
   outline: none;
-  background: #303030;
 }
 
 .message-input::placeholder {
   color: #72767d;
-}
-
-.attach-button {
-  width: 40px;
-  height: 40px;
-  background: transparent;
-  border: none;
-  color: #b9bbbe;
-  font-size: 20px;
-  cursor: pointer;
-  transition: color 0.2s;
-  flex-shrink: 0;
-  border-radius: 8px 0 0 8px;
-}
-
-.attach-button:hover:not(:disabled) {
-  color: #dcddde;
-}
-
-.attach-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .pending-attachments-wrapper {
@@ -2493,11 +2474,36 @@ body {
   display: flex;
   gap: 4px;
   align-items: center;
+  padding: 4px;
 }
 
 .picker-button {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: #b9bbbe;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.2s;
+  flex-shrink: 0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picker-button:hover {
+  color: #dcddde;
+}
+
+.picker-button:active {
+  background: #1e1e1e;
+}
+
+.attach-button {
+  width: 32px;
+  height: 32px;
   background: transparent;
   border: none;
   color: #b9bbbe;
@@ -2511,11 +2517,11 @@ body {
   justify-content: center;
 }
 
-.picker-button:hover {
+.attach-button:hover:not(:disabled) {
   color: #dcddde;
-  background: #2a2a2a;
 }
 
-.picker-button:active {
-  background: #303030;
+.attach-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

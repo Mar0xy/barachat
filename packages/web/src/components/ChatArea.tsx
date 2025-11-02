@@ -207,38 +207,40 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
             accept="image/*"
             onChange={(e) => props.onAttachmentUpload(e.target.files)}
           />
-          <div class="picker-buttons">
-            <button
-              class="attach-button"
-              onClick={() => props.fileInputRef?.click()}
-              disabled={props.uploadingAttachment}
-              title="Attach image"
-            >
-              {props.uploadingAttachment ? '⏳' : '📎'}
-            </button>
-            <button
-              class="picker-button"
-              onClick={() => setShowGifPicker(true)}
-              title="Choose a GIF"
-            >
-              GIF
-            </button>
-            <button
-              class="picker-button"
-              onClick={() => setShowEmojiPicker(true)}
-              title="Choose an emoji"
-            >
-              😀
-            </button>
+          <div class="message-input-wrapper">
+            <textarea
+              class="message-input"
+              placeholder={props.messagePlaceholder || 'Message #general'}
+              value={props.messageInput}
+              onInput={(e) => props.onMessageInputChange(e.currentTarget.value)}
+              onKeyDown={handleKeyDown}
+              onKeyPress={props.onTyping}
+            />
+            <div class="picker-buttons">
+              <button
+                class="attach-button"
+                onClick={() => props.fileInputRef?.click()}
+                disabled={props.uploadingAttachment}
+                title="Attach image"
+              >
+                {props.uploadingAttachment ? '⏳' : '📎'}
+              </button>
+              <button
+                class="picker-button"
+                onClick={() => setShowGifPicker(true)}
+                title="Choose a GIF"
+              >
+                GIF
+              </button>
+              <button
+                class="picker-button"
+                onClick={() => setShowEmojiPicker(true)}
+                title="Choose an emoji"
+              >
+                😀
+              </button>
+            </div>
           </div>
-          <textarea
-            class="message-input"
-            placeholder={props.messagePlaceholder || 'Message #general'}
-            value={props.messageInput}
-            onInput={(e) => props.onMessageInputChange(e.currentTarget.value)}
-            onKeyDown={handleKeyDown}
-            onKeyPress={props.onTyping}
-          />
         </div>
       </Show>
 
