@@ -1,4 +1,4 @@
-import { Component, createSignal, Show, onMount, For, createEffect } from 'solid-js';
+import { Component, createSignal, Show, onMount, For, createEffect, batch } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -8,6 +8,17 @@ interface User {
   _id: string;
   username: string;
   discriminator: string;
+  displayName?: string;
+  avatar?: string;
+}
+
+interface Server {
+  _id: string;
+  name: string;
+  description?: string;
+  owner: string;
+  channels: string[];
+  icon?: string;
 }
 
 interface Channel {
@@ -15,6 +26,7 @@ interface Channel {
   channelType: string;
   name?: string;
   recipients?: string[];
+  server?: string;
 }
 
 interface Message {
@@ -106,12 +118,57 @@ export const Login: Component = () => {
 
 export const Chat: Component = () => {
   const [user, setUser] = createSignal<User | null>(null);
+  const [servers, setServers] = createSignal<Server[]>([]);
+  const [currentServer, setCurrentServer] = createSignal<string>('');
   const [channels, setChannels] = createSignal<Channel[]>([]);
   const [currentChannel, setCurrentChannel] = createSignal<string>('');
   const [messages, setMessages] = createSignal<Message[]>([]);
   const [messageInput, setMessageInput] = createSignal('');
   const [ws, setWs] = createSignal<WebSocket | null>(null);
+  const [showCreateServer, setShowCreateServer] = createSignal(false);
+  const [showUserSettings, setShowUserSettings] = createSignal(false);
+  const [showServerSettings, setShowServerSettings] = createSignal(false);
   const navigate = useNavigate();
+
+  // Fetch servers
+  const loadServers = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/users/@me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error('Error loading user:', error);
+    }
+  };
+
+  // Create server
+  const createServer = async (name: string, description: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/servers/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ name, description })
+      });
+
+      if (response.ok) {
+        const server = await response.json();
+        setServers([...servers(), server]);
+        setShowCreateServer(false);
+        setCurrentServer(server._id);
+      }
+    } catch (error) {
+      console.error('Error creating server:', error);
+    }
+  };
 
   onMount(() => {
     const token = localStorage.getItem('token');
@@ -123,6 +180,7 @@ export const Chat: Component = () => {
     }
 
     setUser(JSON.parse(userStr));
+    loadServers();
 
     // Connect WebSocket
     const websocket = new WebSocket(WS_URL);
@@ -137,7 +195,13 @@ export const Chat: Component = () => {
       console.log('WS message:', data);
 
       if (data.type === 'Ready') {
-        setChannels(data.channels || []);
+        batch(() => {
+          setServers(data.servers || []);
+          setChannels(data.channels || []);
+          if (data.servers && data.servers.length > 0) {
+            setCurrentServer(data.servers[0]._id);
+          }
+        });
       } else if (data.type === 'Message') {
         if (data.message.channel === currentChannel()) {
           setMessages([...messages(), data.message]);
@@ -195,6 +259,8 @@ export const Chat: Component = () => {
       });
 
       if (response.ok) {
+        const message = await response.json();
+        setMessages([...messages(), message]);
         setMessageInput('');
       }
     } catch (error) {
@@ -202,39 +268,86 @@ export const Chat: Component = () => {
     }
   };
 
+  const serverChannels = () => channels().filter(c => c.server === currentServer());
+
   return (
     <div class="app">
+      {/* Server List */}
+      <div class="server-list">
+        <button class="server-icon home-icon" onClick={() => setCurrentServer('')}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
+          </svg>
+        </button>
+        <div class="server-divider"></div>
+        <For each={servers()}>
+          {(server) => (
+            <button
+              class={`server-icon ${currentServer() === server._id ? 'active' : ''}`}
+              onClick={() => setCurrentServer(server._id)}
+              title={server.name}
+            >
+              {server.icon || server.name.substring(0, 2).toUpperCase()}
+            </button>
+          )}
+        </For>
+        <button class="server-icon add-server" onClick={() => setShowCreateServer(true)}>+</button>
+      </div>
+
+      {/* Channel Sidebar */}
       <div class="sidebar">
-        <div style={{ padding: '16px', 'border-bottom': '1px solid #2a2a2a' }}>
-          <strong>{user()?.username}#{user()?.discriminator}</strong>
+        <div class="server-header">
+          <strong>{servers().find(s => s._id === currentServer())?.name || 'Direct Messages'}</strong>
+          <Show when={currentServer()}>
+            <button class="icon-button" onClick={() => setShowServerSettings(true)}>⚙</button>
+          </Show>
         </div>
         <div class="channel-list">
-          <For each={channels()}>
+          <div class="channel-category">TEXT CHANNELS</div>
+          <For each={serverChannels()}>
             {(channel) => (
               <div
                 class={`channel-item ${currentChannel() === channel._id ? 'active' : ''}`}
                 onClick={() => setCurrentChannel(channel._id)}
               >
-                # {channel.name || 'Channel'}
+                <span class="channel-hash">#</span>
+                <span class="channel-name">{channel.name || 'channel'}</span>
               </div>
             )}
           </For>
         </div>
+        <div class="user-panel">
+          <div class="user-info">
+            <div class="user-avatar">{user()?.username?.substring(0, 2).toUpperCase()}</div>
+            <div class="user-details">
+              <div class="user-name">{user()?.username}</div>
+              <div class="user-tag">#{user()?.discriminator}</div>
+            </div>
+          </div>
+          <button class="icon-button" onClick={() => setShowUserSettings(true)}>⚙</button>
+        </div>
       </div>
+
+      {/* Main Chat Area */}
       <div class="main-content">
         <div class="chat-header">
           <Show when={currentChannel()}>
-            <strong>
-              # {channels().find(c => c._id === currentChannel())?.name || 'Channel'}
-            </strong>
+            <span class="channel-hash">#</span>
+            <strong>{channels().find(c => c._id === currentChannel())?.name || 'channel'}</strong>
           </Show>
         </div>
         <div class="messages">
           <For each={messages()}>
             {(message) => (
               <div class="message">
-                <div class="message-author">{message.author}</div>
-                <div class="message-content">{message.content}</div>
+                <div class="message-avatar">{message.author.substring(0, 2).toUpperCase()}</div>
+                <div class="message-content-wrapper">
+                  <div class="message-header">
+                    <span class="message-author">{message.author}</span>
+                    <span class="message-timestamp">{new Date().toLocaleTimeString()}</span>
+                  </div>
+                  <div class="message-content">{message.content}</div>
+                </div>
               </div>
             )}
           </For>
@@ -243,11 +356,207 @@ export const Chat: Component = () => {
           <form onSubmit={sendMessage}>
             <input
               type="text"
-              placeholder="Send a message..."
+              placeholder={`Message #${channels().find(c => c._id === currentChannel())?.name || 'channel'}`}
               value={messageInput()}
               onInput={(e) => setMessageInput(e.currentTarget.value)}
+              disabled={!currentChannel()}
             />
           </form>
+        </div>
+      </div>
+
+      {/* Create Server Modal */}
+      <Show when={showCreateServer()}>
+        <CreateServerModal
+          onClose={() => setShowCreateServer(false)}
+          onCreate={createServer}
+        />
+      </Show>
+
+      {/* User Settings Modal */}
+      <Show when={showUserSettings()}>
+        <UserSettingsModal
+          user={user()}
+          onClose={() => setShowUserSettings(false)}
+          onUpdate={(updatedUser) => {
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }}
+        />
+      </Show>
+
+      {/* Server Settings Modal */}
+      <Show when={showServerSettings()}>
+        <ServerSettingsModal
+          server={servers().find(s => s._id === currentServer())}
+          onClose={() => setShowServerSettings(false)}
+        />
+      </Show>
+    </div>
+  );
+};
+
+// Create Server Modal Component
+const CreateServerModal: Component<{
+  onClose: () => void;
+  onCreate: (name: string, description: string) => void;
+}> = (props) => {
+  const [name, setName] = createSignal('');
+  const [description, setDescription] = createSignal('');
+
+  const handleSubmit = (e: Event) => {
+    e.preventDefault();
+    if (name().trim()) {
+      props.onCreate(name(), description());
+      props.onClose();
+    }
+  };
+
+  return (
+    <div class="modal-overlay" onClick={props.onClose}>
+      <div class="modal" onClick={(e) => e.stopPropagation()}>
+        <div class="modal-header">
+          <h2>Create Server</h2>
+          <button class="modal-close" onClick={props.onClose}>×</button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div class="modal-body">
+            <label>
+              Server Name
+              <input
+                type="text"
+                value={name()}
+                onInput={(e) => setName(e.currentTarget.value)}
+                placeholder="My Awesome Server"
+                required
+              />
+            </label>
+            <label>
+              Description (optional)
+              <textarea
+                value={description()}
+                onInput={(e) => setDescription(e.currentTarget.value)}
+                placeholder="A place for..."
+                rows={3}
+              />
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
+            <button type="submit" class="button-primary">Create Server</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// User Settings Modal Component
+const UserSettingsModal: Component<{
+  user: User | null;
+  onClose: () => void;
+  onUpdate: (user: User) => void;
+}> = (props) => {
+  const [displayName, setDisplayName] = createSignal(props.user?.displayName || '');
+  const [saving, setSaving] = createSignal(false);
+
+  const handleSave = async (e: Event) => {
+    e.preventDefault();
+    setSaving(true);
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/users/@me`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ displayName: displayName() })
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        props.onUpdate(updatedUser);
+        props.onClose();
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div class="modal-overlay" onClick={props.onClose}>
+      <div class="modal" onClick={(e) => e.stopPropagation()}>
+        <div class="modal-header">
+          <h2>User Settings</h2>
+          <button class="modal-close" onClick={props.onClose}>×</button>
+        </div>
+        <form onSubmit={handleSave}>
+          <div class="modal-body">
+            <div class="settings-section">
+              <h3>My Account</h3>
+              <label>
+                Username
+                <input type="text" value={props.user?.username || ''} disabled />
+              </label>
+              <label>
+                Discriminator
+                <input type="text" value={`#${props.user?.discriminator || '0000'}`} disabled />
+              </label>
+              <label>
+                Display Name
+                <input
+                  type="text"
+                  value={displayName()}
+                  onInput={(e) => setDisplayName(e.currentTarget.value)}
+                  placeholder="Enter a display name"
+                />
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="button-secondary" onClick={props.onClose}>Cancel</button>
+            <button type="submit" class="button-primary" disabled={saving()}>
+              {saving() ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Server Settings Modal Component
+const ServerSettingsModal: Component<{
+  server: Server | undefined;
+  onClose: () => void;
+}> = (props) => {
+  return (
+    <div class="modal-overlay" onClick={props.onClose}>
+      <div class="modal" onClick={(e) => e.stopPropagation()}>
+        <div class="modal-header">
+          <h2>Server Settings</h2>
+          <button class="modal-close" onClick={props.onClose}>×</button>
+        </div>
+        <div class="modal-body">
+          <div class="settings-section">
+            <h3>Overview</h3>
+            <label>
+              Server Name
+              <input type="text" value={props.server?.name || ''} disabled />
+            </label>
+            <label>
+              Server ID
+              <input type="text" value={props.server?._id || ''} disabled />
+            </label>
+            <p class="settings-note">More server settings coming soon...</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="button-primary" onClick={props.onClose}>Close</button>
         </div>
       </div>
     </div>
