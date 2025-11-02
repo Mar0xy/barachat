@@ -2,7 +2,6 @@ import { Router, type Router as ExpressRouter } from 'express';
 import { ulid } from 'ulid';
 import { db } from '@barachat/database';
 import { EventType } from '@barachat/models';
-import { broadcastToChannel } from '@barachat/websocket';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
 export const messagesRouter: ExpressRouter = Router();
@@ -47,11 +46,13 @@ messagesRouter.post('/:channelId/messages', authenticate, async (req: AuthReques
       } : { _id: req.userId!, username: 'Unknown', discriminator: '0000' }
     };
 
-    // Broadcast message to all other connected clients in the channel (sender gets it from API response)
-    broadcastToChannel(channelId, {
+    // Broadcast message to all other connected clients in the channel via Redis
+    await db.publishEvent({
       type: EventType.Message,
-      message: messageWithAuthor
-    }, req.userId!);
+      channelId: channelId,
+      message: messageWithAuthor,
+      excludeUserId: req.userId!
+    });
 
     res.json(messageWithAuthor);
   } catch (error) {
@@ -122,9 +123,10 @@ messagesRouter.delete('/:channelId/messages/:messageId', authenticate, async (re
     // Delete the message
     await db.messages.deleteOne({ _id: messageId });
 
-    // Broadcast message deletion
-    broadcastToChannel(channelId, {
+    // Broadcast message deletion via Redis
+    await db.publishEvent({
       type: EventType.MessageDelete,
+      channelId: channelId,
       id: messageId,
       channel: channelId
     });

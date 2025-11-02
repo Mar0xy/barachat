@@ -202,6 +202,39 @@ async function start() {
 
     wss.on('connection', handleConnection);
 
+    // Subscribe to Redis events and broadcast to connected clients
+    await db.subscribeToEvents(async (event) => {
+      try {
+        // Handle different event types
+        if (event.type === EventType.Message) {
+          // Broadcast message to channel recipients
+          await broadcastToChannel(event.channelId, {
+            type: event.type,
+            message: event.message
+          }, event.excludeUserId);
+        } else if (event.type === EventType.MessageDelete) {
+          // Broadcast message deletion to channel recipients
+          await broadcastToChannel(event.channelId, {
+            type: event.type,
+            id: event.id,
+            channel: event.channel
+          });
+        } else if (event.type === EventType.UserUpdate) {
+          // Broadcast user update to all connected clients
+          broadcast({
+            type: event.type,
+            id: event.id,
+            data: event.data
+          });
+        } else {
+          // For other event types, broadcast as-is
+          broadcast(event);
+        }
+      } catch (error) {
+        console.error('Error handling Redis event:', error);
+      }
+    });
+
     console.log(`WebSocket server running on ws://${config.server.host}:${config.server.wsPort}`);
   } catch (error) {
     console.error('Failed to start WebSocket server:', error);

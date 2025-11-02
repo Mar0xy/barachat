@@ -1,6 +1,6 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import { db } from '@barachat/database';
-import { broadcast } from '@barachat/websocket';
+import { EventType } from '@barachat/models';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
 export const usersRouter: ExpressRouter = Router();
@@ -88,14 +88,12 @@ usersRouter.patch('/@me', authenticate, async (req: AuthRequest, res) => {
 
     const user = await db.users.findOne({ _id: req.userId });
     
-    // Broadcast user update to all connected clients (for status changes, display name, avatar, etc.)
+    // Broadcast user update to all connected clients via Redis
     if (user && (status !== undefined || displayName !== undefined || avatar !== undefined)) {
-      broadcast({
-        type: 'UserUpdate',
-        user: {
-          _id: user._id,
-          username: user.username,
-          discriminator: user.discriminator,
+      await db.publishEvent({
+        type: EventType.UserUpdate,
+        id: user._id,
+        data: {
           displayName: user.displayName,
           avatar: user.avatar,
           status: user.status,
