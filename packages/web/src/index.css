@@ -535,6 +535,8 @@ body {
   height: 120px;
   background: linear-gradient(135deg, #5865f2 0%, #4752c4 100%);
   position: relative;
+  background-size: cover;
+  background-position: center;
 }
 
 .profile-close {
@@ -989,6 +991,17 @@ body {
 
 .message-embed {
   margin-top: 8px;
+}
+
+.message-embed.video-embed {
+  margin-top: 8px;
+}
+
+.message-embed.video-embed iframe,
+.message-embed.video-embed video {
+  max-width: 100%;
+  border-radius: 8px;
+  background: #000;
 }
 
 .message-image {
@@ -1678,6 +1691,27 @@ body {
   width: 80px;
   height: 80px;
   border-radius: 40px;
+  object-fit: cover;
+  border: 2px solid #5865f2;
+}
+
+.banner-preview {
+  margin-top: 12px;
+  padding: 12px;
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+
+.banner-preview p {
+  font-size: 12px;
+  color: #b9bbbe;
+  margin-bottom: 8px;
+}
+
+.preview-image-banner {
+  width: 240px;
+  height: 80px;
+  border-radius: 4px;
   object-fit: cover;
   border: 2px solid #5865f2;
 }
