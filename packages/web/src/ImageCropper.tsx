@@ -8,16 +8,23 @@ interface ImageCropperProps {
   title?: string;
 }
 
+// Constants for cropper configuration
+const INITIAL_CROP_POSITION = 50;
+const INITIAL_CROP_SIZE = 200;
+const MIN_CROP_WIDTH = 50;
+const CROP_SIZE_SCALE = 0.8;
+const RESIZE_DELTA = 10;
+
 export const ImageCropper: Component<ImageCropperProps> = (props) => {
   let canvasRef: HTMLCanvasElement | undefined;
   let imageRef: HTMLImageElement | undefined;
 
   const [isDragging, setIsDragging] = createSignal(false);
   const [cropArea, setCropArea] = createSignal({
-    x: 50,
-    y: 50,
-    width: 200,
-    height: 200
+    x: INITIAL_CROP_POSITION,
+    y: INITIAL_CROP_POSITION,
+    width: INITIAL_CROP_SIZE,
+    height: INITIAL_CROP_SIZE
   });
   const [imageLoaded, setImageLoaded] = createSignal(false);
   const [imageSize, setImageSize] = createSignal({ width: 0, height: 0 });
@@ -51,11 +58,11 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
 
         if (aspectRatio >= 1) {
           // Wider or square crop
-          initialWidth = Math.min(width * 0.8, height * 0.8 * aspectRatio);
+          initialWidth = Math.min(width * CROP_SIZE_SCALE, height * CROP_SIZE_SCALE * aspectRatio);
           initialHeight = initialWidth / aspectRatio;
         } else {
           // Taller crop
-          initialHeight = Math.min(height * 0.8, width * 0.8 / aspectRatio);
+          initialHeight = Math.min(height * CROP_SIZE_SCALE, width * CROP_SIZE_SCALE / aspectRatio);
           initialWidth = initialHeight * aspectRatio;
         }
 
@@ -191,7 +198,7 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
     const aspectRatio = effectiveAspectRatio();
 
     // Adjust size with mouse wheel
-    const delta = e.deltaY > 0 ? -10 : 10;
+    const delta = e.deltaY > 0 ? -RESIZE_DELTA : RESIZE_DELTA;
     let newWidth = crop.width + delta;
     let newHeight = newWidth / aspectRatio;
 
@@ -205,11 +212,10 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
       newHeight *= scale;
     }
 
-    const minWidth = 50;
-    const minHeight = minWidth / aspectRatio;
+    const minHeight = MIN_CROP_WIDTH / aspectRatio;
     
-    if (newWidth < minWidth) {
-      newWidth = minWidth;
+    if (newWidth < MIN_CROP_WIDTH) {
+      newWidth = MIN_CROP_WIDTH;
       newHeight = minHeight;
     }
 

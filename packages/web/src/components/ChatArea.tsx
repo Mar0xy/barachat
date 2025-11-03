@@ -164,11 +164,8 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
                         return (
                           <div class="message-embed video-embed">
                             <iframe
-                              width="560"
-                              height="315"
                               src={`https://www.youtube.com/embed/${videoId}`}
                               title="YouTube video player"
-                              frameborder="0"
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                               allowfullscreen
                             />
@@ -181,7 +178,7 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
                     <For each={extractUrls(message.content).filter(isVideoUrl)}>
                       {(url) => (
                         <div class="message-embed video-embed">
-                          <video controls width="560">
+                          <video controls>
                             <source src={url} type="video/mp4" />
                             Your browser does not support the video tag.
                           </video>
@@ -211,7 +208,7 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
                           const isVideo = typeof attachment === 'string' && /\.(mp4|webm|mov)(\?|$)/i.test(attachment);
                           return isVideo ? (
                             <div class="message-embed video-embed">
-                              <video controls width="560">
+                              <video controls>
                                 <source src={attachment} type="video/mp4" />
                                 Your browser does not support the video tag.
                               </video>
