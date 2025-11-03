@@ -2249,16 +2249,17 @@ body {
 }
 
 .gif-category-button {
-  padding: 8px 16px;
+  padding: 10px 20px;
   background: #2a2a2a;
   border: none;
   border-radius: 4px;
   color: #b9bbbe;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .gif-category-button:hover {
