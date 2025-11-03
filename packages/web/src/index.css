@@ -2260,9 +2260,6 @@ body {
   white-space: nowrap;
   transition: all 0.2s;
   flex-shrink: 0;
-  min-width: fit-content;
-  width: auto;
-  letter-spacing: 0.3px;
 }
 
 .gif-category-button:hover {
