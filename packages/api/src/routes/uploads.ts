@@ -32,7 +32,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 10 * 1024 * 1024 // 10MB limit for general uploads
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
@@ -43,6 +43,25 @@ const upload = multer({
       return cb(null, true);
     } else {
       cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp)'));
+    }
+  }
+});
+
+// Separate multer config for video uploads
+const videoUpload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB limit for videos
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /mp4|webm|mov/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = file.mimetype.startsWith('video/');
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only video files are allowed (mp4, webm, mov)'));
     }
   }
 });
@@ -62,6 +81,26 @@ uploadsRouter.post(
       res.json({ url: avatarUrl });
     } catch (error) {
       console.error('Error uploading avatar:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+
+// Upload banner
+uploadsRouter.post(
+  '/banner',
+  authenticate,
+  upload.single('banner'),
+  async (req: AuthRequestWithFile, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const bannerUrl = `/uploads/${req.file.filename}`;
+      res.json({ url: bannerUrl });
+    } catch (error) {
+      console.error('Error uploading banner:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -107,6 +146,31 @@ uploadsRouter.post(
       });
     } catch (error) {
       console.error('Error uploading attachment:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+
+// Upload video attachment
+uploadsRouter.post(
+  '/video',
+  authenticate,
+  videoUpload.single('video'),
+  async (req: AuthRequestWithFile, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const videoUrl = `/uploads/${req.file.filename}`;
+      res.json({
+        url: videoUrl,
+        filename: req.file.originalname,
+        size: req.file.size,
+        mimetype: req.file.mimetype
+      });
+    } catch (error) {
+      console.error('Error uploading video:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }

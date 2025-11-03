@@ -4,9 +4,16 @@ interface ImageCropperProps {
   imageUrl: string;
   onCrop: (croppedBlob: Blob) => void;
   onCancel: () => void;
-  aspectRatio?: number;
+  aspectRatio?: number; // width / height, e.g., 1 for square, 3 for 3:1 banner
   title?: string;
 }
+
+// Constants for cropper configuration
+const INITIAL_CROP_POSITION = 50;
+const INITIAL_CROP_SIZE = 200;
+const MIN_CROP_WIDTH = 50;
+const CROP_SIZE_SCALE = 0.8;
+const RESIZE_DELTA = 10;
 
 export const ImageCropper: Component<ImageCropperProps> = (props) => {
   let canvasRef: HTMLCanvasElement | undefined;
@@ -14,15 +21,16 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
 
   const [isDragging, setIsDragging] = createSignal(false);
   const [cropArea, setCropArea] = createSignal({
-    x: 50,
-    y: 50,
-    size: 200
+    x: INITIAL_CROP_POSITION,
+    y: INITIAL_CROP_POSITION,
+    width: INITIAL_CROP_SIZE,
+    height: INITIAL_CROP_SIZE
   });
   const [imageLoaded, setImageLoaded] = createSignal(false);
   const [imageSize, setImageSize] = createSignal({ width: 0, height: 0 });
 
-  // Note: aspectRatio prop is currently unused. The cropper always produces square crops.
-  // Future enhancement: Support custom aspect ratios for rectangular crops.
+  // Default to square (1:1) if no aspect ratio provided
+  const effectiveAspectRatio = () => props.aspectRatio || 1;
 
   onMount(() => {
     if (imageRef) {
@@ -44,12 +52,25 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
         setImageSize({ width, height });
 
         // Initialize crop area in center
-        const minDimension = Math.min(width, height);
-        const initialSize = minDimension * 0.8;
+        const aspectRatio = effectiveAspectRatio();
+        let initialWidth: number;
+        let initialHeight: number;
+
+        if (aspectRatio >= 1) {
+          // Wider or square crop
+          initialWidth = Math.min(width * CROP_SIZE_SCALE, height * CROP_SIZE_SCALE * aspectRatio);
+          initialHeight = initialWidth / aspectRatio;
+        } else {
+          // Taller crop
+          initialHeight = Math.min(height * CROP_SIZE_SCALE, width * CROP_SIZE_SCALE / aspectRatio);
+          initialWidth = initialHeight * aspectRatio;
+        }
+
         setCropArea({
-          x: (width - initialSize) / 2,
-          y: (height - initialSize) / 2,
-          size: initialSize
+          x: (width - initialWidth) / 2,
+          y: (height - initialHeight) / 2,
+          width: initialWidth,
+          height: initialHeight
         });
 
         setImageLoaded(true);
@@ -79,23 +100,23 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
 
     // Clear the crop area
     const crop = cropArea();
-    ctx.clearRect(crop.x, crop.y, crop.size, crop.size);
+    ctx.clearRect(crop.x, crop.y, crop.width, crop.height);
     ctx.drawImage(
       imageRef!,
       (crop.x / width) * imageRef!.naturalWidth,
       (crop.y / height) * imageRef!.naturalHeight,
-      (crop.size / width) * imageRef!.naturalWidth,
-      (crop.size / height) * imageRef!.naturalHeight,
+      (crop.width / width) * imageRef!.naturalWidth,
+      (crop.height / height) * imageRef!.naturalHeight,
       crop.x,
       crop.y,
-      crop.size,
-      crop.size
+      crop.width,
+      crop.height
     );
 
     // Draw border around crop area
     ctx.strokeStyle = '#5865F2';
     ctx.lineWidth = 2;
-    ctx.strokeRect(crop.x, crop.y, crop.size, crop.size);
+    ctx.strokeRect(crop.x, crop.y, crop.width, crop.height);
 
     // Draw resize handles
     const handleSize = 10;
@@ -103,20 +124,20 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
     // Corner handles
     ctx.fillRect(crop.x - handleSize / 2, crop.y - handleSize / 2, handleSize, handleSize);
     ctx.fillRect(
-      crop.x + crop.size - handleSize / 2,
+      crop.x + crop.width - handleSize / 2,
       crop.y - handleSize / 2,
       handleSize,
       handleSize
     );
     ctx.fillRect(
       crop.x - handleSize / 2,
-      crop.y + crop.size - handleSize / 2,
+      crop.y + crop.height - handleSize / 2,
       handleSize,
       handleSize
     );
     ctx.fillRect(
-      crop.x + crop.size - handleSize / 2,
-      crop.y + crop.size - handleSize / 2,
+      crop.x + crop.width - handleSize / 2,
+      crop.y + crop.height - handleSize / 2,
       handleSize,
       handleSize
     );
@@ -133,7 +154,12 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
     const crop = cropArea();
 
     // Check if clicking inside crop area
-    if (x >= crop.x && x <= crop.x + crop.size && y >= crop.y && y <= crop.y + crop.size) {
+    if (
+      x >= crop.x &&
+      x <= crop.x + crop.width &&
+      y >= crop.y &&
+      y <= crop.y + crop.height
+    ) {
       setIsDragging(true);
     }
   };
@@ -149,12 +175,12 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
     const { width, height } = imageSize();
 
     // Update crop position
-    let newX = x - crop.size / 2;
-    let newY = y - crop.size / 2;
+    let newX = x - crop.width / 2;
+    let newY = y - crop.height / 2;
 
     // Keep crop within bounds
-    newX = Math.max(0, Math.min(newX, width - crop.size));
-    newY = Math.max(0, Math.min(newY, height - crop.size));
+    newX = Math.max(0, Math.min(newX, width - crop.width));
+    newY = Math.max(0, Math.min(newY, height - crop.height));
 
     setCropArea({ ...crop, x: newX, y: newY });
     drawCanvas();
@@ -169,24 +195,41 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
 
     const crop = cropArea();
     const { width, height } = imageSize();
+    const aspectRatio = effectiveAspectRatio();
 
     // Adjust size with mouse wheel
-    const delta = e.deltaY > 0 ? -10 : 10;
-    let newSize = crop.size + delta;
+    const delta = e.deltaY > 0 ? -RESIZE_DELTA : RESIZE_DELTA;
+    let newWidth = crop.width + delta;
+    let newHeight = newWidth / aspectRatio;
 
-    const maxSize = Math.min(width, height);
-    newSize = Math.max(50, Math.min(newSize, maxSize));
+    // Constrain to image bounds
+    const maxWidth = width;
+    const maxHeight = height;
+    
+    if (newWidth > maxWidth || newHeight > maxHeight) {
+      const scale = Math.min(maxWidth / newWidth, maxHeight / newHeight);
+      newWidth *= scale;
+      newHeight *= scale;
+    }
+
+    const minHeight = MIN_CROP_WIDTH / aspectRatio;
+    
+    if (newWidth < MIN_CROP_WIDTH) {
+      newWidth = MIN_CROP_WIDTH;
+      newHeight = minHeight;
+    }
 
     // Keep crop centered when resizing
-    const deltaSize = newSize - crop.size;
-    let newX = crop.x - deltaSize / 2;
-    let newY = crop.y - deltaSize / 2;
+    const deltaWidth = newWidth - crop.width;
+    const deltaHeight = newHeight - crop.height;
+    let newX = crop.x - deltaWidth / 2;
+    let newY = crop.y - deltaHeight / 2;
 
     // Keep within bounds
-    newX = Math.max(0, Math.min(newX, width - newSize));
-    newY = Math.max(0, Math.min(newY, height - newSize));
+    newX = Math.max(0, Math.min(newX, width - newWidth));
+    newY = Math.max(0, Math.min(newY, height - newHeight));
 
-    setCropArea({ x: newX, y: newY, size: newSize });
+    setCropArea({ x: newX, y: newY, width: newWidth, height: newHeight });
     drawCanvas();
   };
 
@@ -198,9 +241,14 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
 
     // Create a new canvas for the cropped image
     const cropCanvas = document.createElement('canvas');
-    const outputSize = 256; // Output resolution
-    cropCanvas.width = outputSize;
-    cropCanvas.height = outputSize;
+    const aspectRatio = effectiveAspectRatio();
+    
+    // For banners (wide aspect), use higher resolution; for avatars (square), use 256
+    const outputHeight = aspectRatio >= 2 ? 200 : 256;
+    const outputWidth = outputHeight * aspectRatio;
+    
+    cropCanvas.width = outputWidth;
+    cropCanvas.height = outputHeight;
 
     const ctx = cropCanvas.getContext('2d');
     if (!ctx) return;
@@ -211,10 +259,21 @@ export const ImageCropper: Component<ImageCropperProps> = (props) => {
 
     const sourceX = crop.x * scaleX;
     const sourceY = crop.y * scaleY;
-    const sourceSize = crop.size * scaleX;
+    const sourceWidth = crop.width * scaleX;
+    const sourceHeight = crop.height * scaleY;
 
     // Draw cropped portion
-    ctx.drawImage(imageRef, sourceX, sourceY, sourceSize, sourceSize, 0, 0, outputSize, outputSize);
+    ctx.drawImage(
+      imageRef,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      outputWidth,
+      outputHeight
+    );
 
     // Convert to blob
     cropCanvas.toBlob((blob) => {
