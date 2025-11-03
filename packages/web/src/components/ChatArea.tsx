@@ -2,6 +2,7 @@ import { Component, For, Show, createEffect, createSignal } from 'solid-js';
 import { Message, User } from '../types';
 import { GifPicker } from './pickers/GifPicker';
 import { EmojiPicker } from './pickers/EmojiPicker';
+import { MessageItem } from './MessageItem';
 
 interface ChatAreaProps {
   messages: Message[];
@@ -45,58 +46,12 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
     }
   };
 
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  // Extract URLs from message content for auto-embedding
-  const extractUrls = (text: string): string[] => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.match(urlRegex) || [];
-  };
-
-  // Check if URL is an embeddable image/GIF
-  const isEmbeddableUrl = (url: string): boolean => {
-    // Support Tenor GIFs and common image formats
-    return (
-      url.includes('tenor.com') ||
-      /\.(gif|jpg|jpeg|png|webp)(\?|$)/i.test(url)
-    );
-  };
-
-  // Extract YouTube video ID from URL
-  const extractYouTubeId = (url: string): string | null => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-      /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/
-    ];
-    
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  };
-
-  // Check if URL is a YouTube video
-  const isYouTubeUrl = (url: string): boolean => {
-    return extractYouTubeId(url) !== null;
-  };
-
-  // Check if URL is a video file
-  const isVideoUrl = (url: string): boolean => {
-    return /\.(mp4|webm|mov)(\?|$)/i.test(url);
-  };
-
   const handleGifSelect = (gifUrl: string) => {
-    // Insert GIF URL into message content
     props.onMessageInputChange(props.messageInput + gifUrl + ' ');
     setShowGifPicker(false);
   };
 
   const handleEmojiSelect = (emoji: string) => {
-    // Insert emoji at cursor position or append to end
     props.onMessageInputChange(props.messageInput + emoji);
     setShowEmojiPicker(false);
   };
@@ -110,123 +65,14 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
         <div class="messages">
           <For each={props.messages}>
             {(message) => (
-              <div
-                class="message"
-                classList={{ 'own-message': message.author._id === props.user?._id }}
-              >
-                <div
-                  class="message-avatar"
-                  classList={{ clickable: !!props.onUserClick }}
-                  onClick={() => props.onUserClick?.(message.author._id)}
-                  style={{ cursor: props.onUserClick ? 'pointer' : 'default' }}
-                >
-                  {message.author.avatar ? (
-                    <img src={message.author.avatar} alt={message.author.username} />
-                  ) : (
-                    <div class="avatar-placeholder">
-                      {(message.author.displayName || message.author.username)
-                        .charAt(0)
-                        .toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div class="message-content">
-                  <div class="message-header">
-                    <span
-                      class="message-author"
-                      classList={{ clickable: !!props.onUserClick }}
-                      onClick={() => props.onUserClick?.(message.author._id)}
-                      style={{ cursor: props.onUserClick ? 'pointer' : 'default' }}
-                    >
-                      {message.author.displayName || message.author.username}
-                    </span>
-                    <span class="message-timestamp">
-                      {formatTimestamp(message.createdAt || new Date().toISOString())}
-                    </span>
-                    <Show when={message.author._id === props.user?._id || props.isServerOwner}>
-                      <button
-                        class="delete-message"
-                        onClick={() => props.onDeleteMessage(message._id)}
-                        title="Delete message"
-                      >
-                        🗑️
-                      </button>
-                    </Show>
-                  </div>
-                  <div class="message-text">{message.content}</div>
-                  
-                  {/* Auto-embed URLs found in message content */}
-                  <Show when={message.content}>
-                    {/* YouTube embeds */}
-                    <For each={extractUrls(message.content).filter(isYouTubeUrl)}>
-                      {(url) => {
-                        const videoId = extractYouTubeId(url);
-                        return (
-                          <div class="message-embed video-embed">
-                            <iframe
-                              src={`https://www.youtube.com/embed/${videoId}`}
-                              title="YouTube video player"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowfullscreen
-                            />
-                          </div>
-                        );
-                      }}
-                    </For>
-
-                    {/* Video file embeds */}
-                    <For each={extractUrls(message.content).filter(isVideoUrl)}>
-                      {(url) => (
-                        <div class="message-embed video-embed">
-                          <video controls>
-                            <source src={url} type="video/mp4" />
-                            Your browser does not support the video tag.
-                          </video>
-                        </div>
-                      )}
-                    </For>
-
-                    {/* Image/GIF embeds */}
-                    <For each={extractUrls(message.content).filter(isEmbeddableUrl)}>
-                      {(url) => (
-                        <div class="message-embed">
-                          <img
-                            src={url}
-                            alt="embedded content"
-                            class="message-image"
-                            onClick={() => props.onImageClick(url)}
-                          />
-                        </div>
-                      )}
-                    </For>
-                  </Show>
-
-                  <Show when={message.attachments && message.attachments.length > 0}>
-                    <div class="message-attachments">
-                      <For each={message.attachments}>
-                        {(attachment) => {
-                          const isVideo = typeof attachment === 'string' && /\.(mp4|webm|mov)(\?|$)/i.test(attachment);
-                          return isVideo ? (
-                            <div class="message-embed video-embed">
-                              <video controls>
-                                <source src={attachment} type="video/mp4" />
-                                Your browser does not support the video tag.
-                              </video>
-                            </div>
-                          ) : (
-                            <img
-                              src={attachment}
-                              alt="attachment"
-                              class="message-image"
-                              onClick={() => props.onImageClick(attachment)}
-                            />
-                          );
-                        }}
-                      </For>
-                    </div>
-                  </Show>
-                </div>
-              </div>
+              <MessageItem
+                message={message}
+                currentUser={props.user}
+                isServerOwner={props.isServerOwner}
+                onDelete={props.onDeleteMessage}
+                onImageClick={props.onImageClick}
+                onUserClick={props.onUserClick}
+              />
             )}
           </For>
           <div ref={messagesEndRef} />

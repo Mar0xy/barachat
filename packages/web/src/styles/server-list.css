@@ -1,0 +1,67 @@
+/* Server List */
+.server-list {
+  width: 72px;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.server-item {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  background: #2a2a2a;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.server-item:hover {
+  border-radius: 16px;
+  background: #5865f2;
+}
+
+.server-item.active {
+  border-radius: 16px;
+  background: #5865f2;
+}
+
+.server-item.home-button {
+  background: #5865f2;
+}
+
+.server-item.add-server {
+  background: #2a2a2a;
+  color: #3ba55d;
+  font-size: 32px;
+}
+
+.server-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.server-acronym {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.server-separator {
+  width: 32px;
+  height: 2px;
+  background: #2a2a2a;
+  margin: 4px 0;
+}

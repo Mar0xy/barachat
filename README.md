@@ -12,15 +12,14 @@ A modern chat platform built with TypeScript
 
 Barachat is a modern, self-hosted chat platform built with TypeScript. It's inspired by platforms like Revolt and Discord, featuring real-time messaging, servers, channels, and direct messages. The project is structured as a monorepo with separate packages for the API, WebSocket server, web frontend, and shared components.
 
-Key features:
-
-Key features:
+### Key Features
 
 - **REST API Server** - Express-based API for authentication, user management, servers, channels, and messages
 - **WebSocket Server** - Real-time bidirectional communication for instant message delivery and presence updates
 - **Web Frontend** - Modern, responsive web client built with Solid.js and TypeScript
 - **Database Layer** - MongoDB for data persistence and Redis for caching and pub/sub messaging
 - **Modular Architecture** - Organized as a pnpm monorepo with clearly separated packages and concerns
+- **Modular CSS** - Well-organized, component-specific stylesheets for maintainability
 - **Docker Support** - Full Docker Compose setup for easy deployment with nginx reverse proxy
 
 ## Architecture
@@ -226,9 +225,19 @@ barachat/
 │   │   └── src/index.ts       # WebSocket connection handling, event broadcasting
 │   └── web/             # Web frontend
 │       └── src/
-│           ├── components/    # React-like Solid.js components
+│           ├── components/    # Solid.js components
+│           │   ├── modals/   # Modal dialogs (user/server settings, create channel, etc.)
+│           │   └── pickers/  # GIF and Emoji pickers
+│           ├── styles/        # Modular CSS files organized by component
+│           │   ├── base.css       # Base styles and resets
+│           │   ├── buttons.css    # Button variants
+│           │   ├── chat.css       # Chat area and messages
+│           │   ├── sidebar.css    # Channel list sidebar
+│           │   ├── modals.css     # Modal base styles
+│           │   └── ...           # Other component-specific styles
 │           ├── utils/         # API client, constants
-│           └── App.tsx        # Main application component
+│           ├── App.tsx        # Component exports
+│           └── index.tsx      # Application entry point
 ├── docker-compose.yml   # Docker services configuration
 ├── Dockerfile.api       # API server container
 ├── Dockerfile.websocket # WebSocket server container
@@ -480,6 +489,27 @@ Configure nginx or another reverse proxy to:
 
 Example nginx configuration is available in `nginx-proxy.conf`.
 
+## Code Organization
+
+### Frontend Architecture
+
+The web frontend follows a component-based architecture with modular CSS:
+
+- **Components**: Organized by feature (modals, pickers, UI components)
+- **Styles**: Split into 15 separate CSS files by component/purpose
+  - Each component has its own stylesheet for easy maintenance
+  - Base styles, buttons, and utility classes in separate files
+  - No duplicate CSS classes or redundant code
+- **Type Safety**: Full TypeScript coverage with shared types from `@barachat/models`
+- **State Management**: Uses Solid.js signals for reactive state
+
+### Backend Architecture
+
+- **Separation of Concerns**: API, WebSocket, Database, and Config are separate packages
+- **Shared Models**: Common types and interfaces in `@barachat/models`
+- **Middleware**: Authentication and authorization handled via JWT tokens
+- **Real-time**: WebSocket server for instant message delivery and presence updates
+
 ## Comparison with Stoat/Revolt
 
 This project is inspired by [stoatchat/stoatchat](https://github.com/stoatchat/stoatchat) and [stoatchat/for-web](https://github.com/stoatchat/for-web), but implemented in TypeScript instead of Rust:
@@ -496,6 +526,14 @@ This project is inspired by [stoatchat/stoatchat](https://github.com/stoatchat/s
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Development Guidelines
+
+- Follow the existing code style and structure
+- Write meaningful commit messages
+- Test your changes before submitting
+- Update documentation when adding new features
+- Keep CSS modular - add styles to the appropriate file in `packages/web/src/styles/`
 
 ## License
 
