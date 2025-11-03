@@ -324,7 +324,10 @@ export const Chat: Component = () => {
 
   // Create channel
   const createChannel = (channel: Channel) => {
-    setChannels([...channels(), channel]);
+    // Check if channel already exists to prevent duplicates from WebSocket race condition
+    if (!channels().some((c) => c._id === channel._id)) {
+      setChannels([...channels(), channel]);
+    }
     setShowCreateChannel(false);
   };
 
