@@ -88,7 +88,7 @@ export const ProfileImageUploader: Component<ProfileImageUploaderProps> = (props
 
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`${API_URL}/upload/avatar`, {
+      const response = await fetch(`${API_URL}/upload/banner`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`

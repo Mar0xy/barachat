@@ -343,7 +343,10 @@ export const Chat: Component = () => {
         ref={fileInputRef}
         style={{ display: 'none' }}
         accept="image/*,video/*"
-        onChange={(e) => state.onAttachmentUpload?.(e.currentTarget.files)}
+        onChange={(e) => {
+          const files = e.currentTarget.files;
+          if (files && files[0]) state.uploadAttachment(files[0]);
+        }}
       />
     </div>
   );
