@@ -2246,6 +2246,7 @@ body {
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: thin;
+  flex-shrink: 0;
 }
 
 .gif-category-button {
@@ -2259,7 +2260,6 @@ body {
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
-  flex-shrink: 0;
 }
 
 .gif-category-button:hover {
