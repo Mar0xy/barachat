@@ -1,0 +1,174 @@
+/* User Profile Modal */
+.user-profile-modal {
+  max-width: 600px;
+  width: 90%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.profile-banner {
+  height: 120px;
+  background: linear-gradient(135deg, #5865f2 0%, #4752c4 100%);
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+
+.profile-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
+}
+
+.profile-content {
+  padding: 0 16px 16px 16px;
+  position: relative;
+}
+
+.profile-avatar-section {
+  margin-top: -40px;
+  margin-bottom: 16px;
+}
+
+.profile-avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 6px solid #1e1e1e;
+  object-fit: cover;
+}
+
+.profile-avatar-placeholder {
+  background: #5865f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.profile-status-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 6px solid #1e1e1e;
+}
+
+.profile-status-indicator.online {
+  background: #3ba55d;
+}
+
+.profile-status-indicator.idle {
+  background: #faa61a;
+}
+
+.profile-status-indicator.dnd {
+  background: #ed4245;
+}
+
+.profile-status-indicator.offline {
+  background: #747f8d;
+}
+
+.profile-info {
+  padding: 0;
+}
+
+.profile-name-section {
+  margin-bottom: 16px;
+}
+
+.profile-display-name {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #fff;
+}
+
+.profile-username-tag {
+  font-size: 16px;
+  color: #b9bbbe;
+}
+
+.profile-divider {
+  height: 1px;
+  background: #2a2a2a;
+  margin: 16px 0;
+}
+
+.profile-section {
+  margin-bottom: 16px;
+}
+
+.profile-section h3 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #b9bbbe;
+  margin: 0 0 8px 0;
+}
+
+.profile-bio {
+  color: #dcddde;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.profile-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dcddde;
+  font-size: 14px;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.status-dot.online {
+  background: #3ba55d;
+}
+
+.status-dot.idle {
+  background: #faa61a;
+}
+
+.status-dot.dnd {
+  background: #ed4245;
+}
+
+.status-dot.offline {
+  background: #747f8d;
+}
+
+.profile-status-text {
+  color: #b9bbbe;
+  font-size: 13px;
+  margin: 4px 0 0 20px;
+  font-style: italic;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.profile-actions .button-primary,
+.profile-actions .button-secondary {
+  flex: 1;
+}
