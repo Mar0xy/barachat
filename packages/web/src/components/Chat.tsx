@@ -14,6 +14,7 @@ import { ServerList } from './ServerList';
 import { ChannelList } from './ChannelList';
 import { ChatArea } from './ChatArea';
 import { UserPanel } from './UserPanel';
+import { userApi, serverApi, channelApi, messageApi, friendApi, uploadApi } from '../services/api';
 
 export const Chat: Component = () => {
   const [user, setUser] = createSignal<User | null>(null);
