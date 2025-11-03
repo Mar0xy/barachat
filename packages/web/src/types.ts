@@ -47,9 +47,17 @@ export interface Server {
   icon?: string;
 }
 
+export type ChannelType = 
+  | 'SavedMessages'
+  | 'DirectMessage'
+  | 'Group'
+  | 'TextChannel'
+  | 'VoiceChannel'
+  | 'Category';
+
 export interface Channel {
   _id: string;
-  channelType: 'text' | 'voice' | 'category' | 'dm';
+  channelType: ChannelType;
   name?: string;
   recipients?: string[];
   server?: string;

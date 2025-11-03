@@ -57,16 +57,16 @@ export const InviteManager: Component<InviteManagerProps> = (props) => {
   };
 
   // Delete invite
-  const deleteInvite = async (inviteCode: string) => {
+  const deleteInvite = async (inviteId: string) => {
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`${API_URL}/servers/${props.serverId}/invites/${inviteCode}`, {
+      const response = await fetch(`${API_URL}/servers/${props.serverId}/invites/${inviteId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.ok) {
-        setInvites(invites().filter((i) => i.code !== inviteCode));
+        setInvites(invites().filter((i) => i._id !== inviteId));
       }
     } catch (error) {
       console.error('Error deleting invite:', error);
@@ -137,7 +137,7 @@ export const InviteManager: Component<InviteManagerProps> = (props) => {
           {(invite) => (
             <div class="invite-item">
               <div class="invite-info">
-                <div class="invite-code">{invite.code}</div>
+                <div class="invite-code">{invite._id}</div>
                 <div class="invite-meta">
                   <span>Uses: {invite.uses || 0}</span>
                   {invite.maxUses > 0 && <span> / {invite.maxUses}</span>}
@@ -149,7 +149,7 @@ export const InviteManager: Component<InviteManagerProps> = (props) => {
                   )}
                 </div>
               </div>
-              <button class="button-danger-small" onClick={() => deleteInvite(invite.code)}>
+              <button class="button-danger-small" onClick={() => deleteInvite(invite._id)}>
                 Delete
               </button>
             </div>

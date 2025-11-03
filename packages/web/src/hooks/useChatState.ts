@@ -72,7 +72,7 @@ export function useChatState() {
       if (savedChannel && channelData.some(c => c._id === savedChannel)) {
         setCurrentChannel(savedChannel);
       } else {
-        const firstTextChannel = channelData.find(c => c.channelType === 'Text');
+        const firstTextChannel = channelData.find(c => c.channelType === 'TextChannel');
         if (firstTextChannel) setCurrentChannel(firstTextChannel._id);
       }
     }
