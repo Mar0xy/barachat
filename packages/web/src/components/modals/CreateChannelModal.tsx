@@ -12,7 +12,7 @@ interface CreateChannelModalProps {
 export const CreateChannelModal: Component<CreateChannelModalProps> = (props) => {
   const [name, setName] = createSignal('');
   const [description, setDescription] = createSignal('');
-  const [channelType, setChannelType] = createSignal<'text' | 'category'>('text');
+  const [channelType, setChannelType] = createSignal<'TextChannel' | 'Category'>('TextChannel');
   const [selectedCategory, setSelectedCategory] = createSignal('');
 
   const handleSubmit = async (e: Event) => {
@@ -30,8 +30,8 @@ export const CreateChannelModal: Component<CreateChannelModalProps> = (props) =>
         body: JSON.stringify({
           name: name(),
           description: description(),
-          channelType: channelType() === 'category' ? 'Category' : 'TextChannel',
-          ...(channelType() === 'text' && selectedCategory() && { category: selectedCategory() })
+          channelType: channelType(),
+          ...(channelType() === 'TextChannel' && selectedCategory() && { category: selectedCategory() })
         })
       });
 
@@ -49,7 +49,7 @@ export const CreateChannelModal: Component<CreateChannelModalProps> = (props) =>
     <div class="modal-overlay" onClick={props.onClose}>
       <div class="modal" onClick={(e) => e.stopPropagation()}>
         <div class="modal-header">
-          <h2>Create {channelType() === 'category' ? 'Category' : 'Text Channel'}</h2>
+          <h2>Create {channelType() === 'Category' ? 'Category' : 'Text Channel'}</h2>
           <button class="modal-close" onClick={props.onClose}>
             ×
           </button>
@@ -60,7 +60,7 @@ export const CreateChannelModal: Component<CreateChannelModalProps> = (props) =>
               Type
               <select
                 value={channelType()}
-                onChange={(e) => setChannelType(e.currentTarget.value as 'text' | 'category')}
+                onChange={(e) => setChannelType(e.currentTarget.value as 'TextChannel' | 'Category')}
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -72,21 +72,21 @@ export const CreateChannelModal: Component<CreateChannelModalProps> = (props) =>
                   'font-size': '15px'
                 }}
               >
-                <option value="text">Text Channel</option>
-                <option value="category">Category</option>
+                <option value="TextChannel">Text Channel</option>
+                <option value="Category">Category</option>
               </select>
             </label>
             <label>
-              {channelType() === 'category' ? 'Category' : 'Channel'} Name
+              {channelType() === 'Category' ? 'Category' : 'Channel'} Name
               <input
                 type="text"
                 value={name()}
                 onInput={(e) => setName(e.currentTarget.value)}
-                placeholder={channelType() === 'category' ? 'New Category' : 'general'}
+                placeholder={channelType() === 'Category' ? 'New Category' : 'general'}
                 required
               />
             </label>
-            {channelType() === 'text' && (
+            {channelType() === 'TextChannel' && (
               <>
                 <label>
                   Description (optional)
@@ -129,7 +129,7 @@ export const CreateChannelModal: Component<CreateChannelModalProps> = (props) =>
               Cancel
             </button>
             <button type="submit" class="button-primary">
-              Create {channelType() === 'category' ? 'Category' : 'Channel'}
+              Create {channelType() === 'Category' ? 'Category' : 'Channel'}
             </button>
           </div>
         </form>
