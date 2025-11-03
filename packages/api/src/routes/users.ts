@@ -74,12 +74,13 @@ usersRouter.get('/:userId', authenticate, async (req: AuthRequest, res) => {
 // Update user
 usersRouter.patch('/@me', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { displayName, status, avatar, bio } = req.body;
+    const { displayName, status, avatar, banner, bio } = req.body;
 
     const update: any = {};
     if (displayName !== undefined) update.displayName = displayName;
     if (status !== undefined) update.status = status;
     if (avatar !== undefined) update.avatar = avatar;
+    if (banner !== undefined) update.banner = banner;
     if (bio !== undefined) update.bio = bio;
 
     await db.users.updateOne({ _id: req.userId }, { $set: update });
@@ -94,6 +95,7 @@ usersRouter.patch('/@me', authenticate, async (req: AuthRequest, res) => {
         data: {
           displayName: user.displayName,
           avatar: user.avatar,
+          banner: user.banner,
           status: user.status,
           bio: user.bio
         }

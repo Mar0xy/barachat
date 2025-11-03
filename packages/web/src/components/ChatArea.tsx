@@ -65,6 +65,30 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
     );
   };
 
+  // Extract YouTube video ID from URL
+  const extractYouTubeId = (url: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  };
+
+  // Check if URL is a YouTube video
+  const isYouTubeUrl = (url: string): boolean => {
+    return extractYouTubeId(url) !== null;
+  };
+
+  // Check if URL is a video file
+  const isVideoUrl = (url: string): boolean => {
+    return /\.(mp4|webm|mov)(\?|$)/i.test(url);
+  };
+
   const handleGifSelect = (gifUrl: string) => {
     // Insert GIF URL into message content
     props.onMessageInputChange(props.messageInput + gifUrl + ' ');
@@ -133,6 +157,39 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
                   
                   {/* Auto-embed URLs found in message content */}
                   <Show when={message.content}>
+                    {/* YouTube embeds */}
+                    <For each={extractUrls(message.content).filter(isYouTubeUrl)}>
+                      {(url) => {
+                        const videoId = extractYouTubeId(url);
+                        return (
+                          <div class="message-embed video-embed">
+                            <iframe
+                              width="560"
+                              height="315"
+                              src={`https://www.youtube.com/embed/${videoId}`}
+                              title="YouTube video player"
+                              frameborder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowfullscreen
+                            />
+                          </div>
+                        );
+                      }}
+                    </For>
+
+                    {/* Video file embeds */}
+                    <For each={extractUrls(message.content).filter(isVideoUrl)}>
+                      {(url) => (
+                        <div class="message-embed video-embed">
+                          <video controls width="560">
+                            <source src={url} type="video/mp4" />
+                            Your browser does not support the video tag.
+                          </video>
+                        </div>
+                      )}
+                    </For>
+
+                    {/* Image/GIF embeds */}
                     <For each={extractUrls(message.content).filter(isEmbeddableUrl)}>
                       {(url) => (
                         <div class="message-embed">
@@ -150,14 +207,24 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
                   <Show when={message.attachments && message.attachments.length > 0}>
                     <div class="message-attachments">
                       <For each={message.attachments}>
-                        {(attachment) => (
-                          <img
-                            src={attachment}
-                            alt="attachment"
-                            class="message-image"
-                            onClick={() => props.onImageClick(attachment)}
-                          />
-                        )}
+                        {(attachment) => {
+                          const isVideo = typeof attachment === 'string' && /\.(mp4|webm|mov)(\?|$)/i.test(attachment);
+                          return isVideo ? (
+                            <div class="message-embed video-embed">
+                              <video controls width="560">
+                                <source src={attachment} type="video/mp4" />
+                                Your browser does not support the video tag.
+                              </video>
+                            </div>
+                          ) : (
+                            <img
+                              src={attachment}
+                              alt="attachment"
+                              class="message-image"
+                              onClick={() => props.onImageClick(attachment)}
+                            />
+                          );
+                        }}
                       </For>
                     </div>
                   </Show>
@@ -182,17 +249,26 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
             </div>
             <div class="pending-attachments">
               <For each={props.pendingAttachments}>
-                {(attachment) => (
-                  <div class="pending-attachment">
-                    <img src={attachment} alt="pending" />
-                    <button
-                      class="remove-attachment"
-                      onClick={() => props.onRemoveAttachment(attachment)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                )}
+                {(attachment) => {
+                  const isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(attachment);
+                  return (
+                    <div class="pending-attachment">
+                      {isVideo ? (
+                        <video width="100" height="100">
+                          <source src={attachment} type="video/mp4" />
+                        </video>
+                      ) : (
+                        <img src={attachment} alt="pending" />
+                      )}
+                      <button
+                        class="remove-attachment"
+                        onClick={() => props.onRemoveAttachment(attachment)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                }}
               </For>
             </div>
           </div>
@@ -204,7 +280,7 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
             ref={props.fileInputRef}
             style="display: none"
             multiple
-            accept="image/*"
+            accept="image/*,video/mp4,video/webm"
             onChange={(e) => props.onAttachmentUpload(e.target.files)}
           />
           <div class="message-input-wrapper">

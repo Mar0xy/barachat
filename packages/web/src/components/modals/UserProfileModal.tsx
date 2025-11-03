@@ -102,7 +102,7 @@ export const UserProfileModal: Component<UserProfileModalProps> = (props) => {
     <Show when={props.user}>
       <div class="modal-overlay" onClick={props.onClose}>
         <div class="modal user-profile-modal" onClick={(e) => e.stopPropagation()}>
-          <div class="profile-banner">
+          <div class="profile-banner" style={props.user!.banner ? `background-image: url(${props.user!.banner})` : ''}>
             <button class="modal-close profile-close" onClick={props.onClose}>
               ×
             </button>

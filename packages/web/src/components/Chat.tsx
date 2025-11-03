@@ -418,10 +418,20 @@ export const Chat: Component = () => {
       const uploadedUrls: string[] = [];
 
       for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         const formData = new FormData();
-        formData.append('file', files[i]);
+        
+        // Check if it's a video file
+        const isVideo = file.type.startsWith('video/');
+        
+        if (isVideo) {
+          formData.append('video', file);
+        } else {
+          formData.append('file', file);
+        }
 
-        const response = await fetch(`${API_URL}/upload/attachment`, {
+        const endpoint = isVideo ? '/upload/video' : '/upload/attachment';
+        const response = await fetch(`${API_URL}${endpoint}`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
           body: formData

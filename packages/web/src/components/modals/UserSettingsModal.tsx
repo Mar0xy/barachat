@@ -16,9 +16,12 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
   const [statusText, setStatusText] = createSignal(props.user?.status?.text || '');
   const [presence, setPresence] = createSignal(props.user?.status?.presence || 'Online');
   const [avatar, setAvatar] = createSignal(props.user?.avatar || '');
+  const [banner, setBanner] = createSignal(props.user?.banner || '');
   const [saving, setSaving] = createSignal(false);
   const [uploading, setUploading] = createSignal(false);
+  const [uploadingBanner, setUploadingBanner] = createSignal(false);
   const [cropImageUrl, setCropImageUrl] = createSignal<string | null>(null);
+  const [cropBannerUrl, setCropBannerUrl] = createSignal<string | null>(null);
 
   const handleFileSelect = (e: Event) => {
     const input = e.target as HTMLInputElement;
@@ -31,6 +34,23 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
       const result = e.target?.result;
       if (typeof result === 'string') {
         setCropImageUrl(result);
+      }
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleBannerFileSelect = (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (typeof result === 'string') {
+        setCropBannerUrl(result);
       }
     };
 
@@ -68,6 +88,37 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
     }
   };
 
+  const handleCroppedBanner = async (blob: Blob) => {
+    setUploadingBanner(true);
+    setCropBannerUrl(null);
+
+    const formData = new FormData();
+    formData.append('banner', blob, 'banner.png');
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_URL}/upload/banner`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBanner(data.url);
+      } else {
+        alert('Failed to upload banner');
+      }
+    } catch (error) {
+      console.error('Error uploading banner:', error);
+      alert('Error uploading banner');
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   const handleSave = async (e: Event) => {
     e.preventDefault();
     setSaving(true);
@@ -87,7 +138,8 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
             text: statusText(),
             presence: presence()
           },
-          avatar: avatar()
+          avatar: avatar(),
+          banner: banner()
         })
       });
 
@@ -214,6 +266,37 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
                 </Show>
               </div>
 
+              <div class="settings-divider" />
+
+              <h3 class="settings-subtitle">Banner</h3>
+              <div class="settings-section">
+                <label>
+                  Upload Banner
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBannerFileSelect}
+                    disabled={uploadingBanner()}
+                  />
+                  {uploadingBanner() && <p class="upload-status">Uploading...</p>}
+                </label>
+                <label>
+                  Banner URL (or upload above)
+                  <input
+                    type="text"
+                    value={banner()}
+                    onInput={(e) => setBanner(e.currentTarget.value)}
+                    placeholder="Enter banner image URL (e.g., https://...)"
+                  />
+                </label>
+                <Show when={banner()}>
+                  <div class="banner-preview">
+                    <p>Banner Preview:</p>
+                    <img src={banner()} alt="Banner preview" class="preview-image-banner" />
+                  </div>
+                </Show>
+              </div>
+
               <div class="settings-actions">
                 <button type="button" class="button-secondary" onClick={props.onClose}>
                   Cancel
@@ -232,6 +315,17 @@ export const UserSettingsModal: Component<UserSettingsModalProps> = (props) => {
             onCrop={handleCroppedImage}
             onCancel={() => setCropImageUrl(null)}
             title="Crop Avatar"
+            aspectRatio={1}
+          />
+        </Show>
+
+        <Show when={cropBannerUrl()}>
+          <ImageCropper
+            imageUrl={cropBannerUrl()!}
+            onCrop={handleCroppedBanner}
+            onCancel={() => setCropBannerUrl(null)}
+            title="Crop Banner"
+            aspectRatio={3}
           />
         </Show>
       </div>
