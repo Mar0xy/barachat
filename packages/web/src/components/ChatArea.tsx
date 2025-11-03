@@ -1,5 +1,7 @@
-import { Component, For, Show, createEffect } from 'solid-js';
+import { Component, For, Show, createEffect, createSignal } from 'solid-js';
 import { Message, User } from '../types';
+import { GifPicker } from './pickers/GifPicker';
+import { EmojiPicker } from './pickers/EmojiPicker';
 
 interface ChatAreaProps {
   messages: Message[];
@@ -27,6 +29,8 @@ interface ChatAreaProps {
 
 export const ChatArea: Component<ChatAreaProps> = (props) => {
   let messagesEndRef: HTMLDivElement | undefined;
+  const [showGifPicker, setShowGifPicker] = createSignal(false);
+  const [showEmojiPicker, setShowEmojiPicker] = createSignal(false);
 
   createEffect(() => {
     if (messagesEndRef) {
@@ -44,6 +48,33 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Extract URLs from message content for auto-embedding
+  const extractUrls = (text: string): string[] => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.match(urlRegex) || [];
+  };
+
+  // Check if URL is an embeddable image/GIF
+  const isEmbeddableUrl = (url: string): boolean => {
+    // Support Tenor GIFs and common image formats
+    return (
+      url.includes('tenor.com') ||
+      /\.(gif|jpg|jpeg|png|webp)(\?|$)/i.test(url)
+    );
+  };
+
+  const handleGifSelect = (gifUrl: string) => {
+    // Insert GIF URL into message content
+    props.onMessageInputChange(props.messageInput + gifUrl + ' ');
+    setShowGifPicker(false);
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    // Insert emoji at cursor position or append to end
+    props.onMessageInputChange(props.messageInput + emoji);
+    setShowEmojiPicker(false);
   };
 
   return (
@@ -99,6 +130,23 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
                     </Show>
                   </div>
                   <div class="message-text">{message.content}</div>
+                  
+                  {/* Auto-embed URLs found in message content */}
+                  <Show when={message.content}>
+                    <For each={extractUrls(message.content).filter(isEmbeddableUrl)}>
+                      {(url) => (
+                        <div class="message-embed">
+                          <img
+                            src={url}
+                            alt="embedded content"
+                            class="message-image"
+                            onClick={() => props.onImageClick(url)}
+                          />
+                        </div>
+                      )}
+                    </For>
+                  </Show>
+
                   <Show when={message.attachments && message.attachments.length > 0}>
                     <div class="message-attachments">
                       <For each={message.attachments}>
@@ -159,23 +207,49 @@ export const ChatArea: Component<ChatAreaProps> = (props) => {
             accept="image/*"
             onChange={(e) => props.onAttachmentUpload(e.target.files)}
           />
-          <button
-            class="attach-button"
-            onClick={() => props.fileInputRef?.click()}
-            disabled={props.uploadingAttachment}
-            title="Attach image"
-          >
-            {props.uploadingAttachment ? '⏳' : '📎'}
-          </button>
-          <textarea
-            class="message-input"
-            placeholder={props.messagePlaceholder || 'Message #general'}
-            value={props.messageInput}
-            onInput={(e) => props.onMessageInputChange(e.currentTarget.value)}
-            onKeyDown={handleKeyDown}
-            onKeyPress={props.onTyping}
-          />
+          <div class="message-input-wrapper">
+            <textarea
+              class="message-input"
+              placeholder={props.messagePlaceholder || 'Message #general'}
+              value={props.messageInput}
+              onInput={(e) => props.onMessageInputChange(e.currentTarget.value)}
+              onKeyDown={handleKeyDown}
+              onKeyPress={props.onTyping}
+            />
+            <div class="picker-buttons">
+              <button
+                class="attach-button"
+                onClick={() => props.fileInputRef?.click()}
+                disabled={props.uploadingAttachment}
+                title="Attach image"
+              >
+                {props.uploadingAttachment ? '⏳' : '📎'}
+              </button>
+              <button
+                class="picker-button"
+                onClick={() => setShowGifPicker(true)}
+                title="Choose a GIF"
+              >
+                GIF
+              </button>
+              <button
+                class="picker-button"
+                onClick={() => setShowEmojiPicker(true)}
+                title="Choose an emoji"
+              >
+                😀
+              </button>
+            </div>
+          </div>
         </div>
+      </Show>
+
+      <Show when={showGifPicker()}>
+        <GifPicker onSelectGif={handleGifSelect} onClose={() => setShowGifPicker(false)} />
+      </Show>
+
+      <Show when={showEmojiPicker()}>
+        <EmojiPicker onSelectEmoji={handleEmojiSelect} onClose={() => setShowEmojiPicker(false)} />
       </Show>
 
       <Show when={props.lightboxImage()}>
