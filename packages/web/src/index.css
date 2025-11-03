@@ -1713,10 +1713,6 @@ body {
   padding: 16px;
 }
 
-.message {
-  margin-bottom: 16px;
-}
-
 .message-author {
   font-weight: 600;
   margin-bottom: 4px;
